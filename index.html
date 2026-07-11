@@ -1,19 +1,1615 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sw">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Bot Pair</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hospitallink - Mikeka System</title>
+
+    <!-- Firebase Client SDK (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+    </script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <style>
+        /* ----- GLOBAL RESET & BASE ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #0b0e1a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ----- SCROLLBAR ----- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1f33;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a6cf7;
+            border-radius: 8px;
+        }
+
+        /* ----- NAVIGATION ----- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            background: rgba(11, 14, 26, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(74, 108, 247, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-brand {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4a6cf7, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .nav-brand i {
+            -webkit-text-fill-color: #4a6cf7;
+            margin-right: 6px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a,
+        .nav-links button {
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border: none;
+            background: transparent;
+            color: #b0b8d1;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-links a:hover,
+        .nav-links button:hover {
+            background: rgba(74, 108, 247, 0.15);
+            color: #fff;
+        }
+        .nav-links a.active {
+            background: rgba(74, 108, 247, 0.25);
+            color: #fff;
+        }
+
+        .btn-outline {
+            border: 1.5px solid rgba(74, 108, 247, 0.5) !important;
+            color: #4a6cf7 !important;
+        }
+        .btn-outline:hover {
+            background: #4a6cf7 !important;
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4a6cf7, #7c3aed) !important;
+            color: #fff !important;
+        }
+        .btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 30px rgba(74, 108, 247, 0.35);
+        }
+
+        .btn-danger {
+            background: #ef4444 !important;
+            color: #fff !important;
+        }
+        .btn-danger:hover {
+            background: #dc2626 !important;
+        }
+
+        .btn-success {
+            background: #22c55e !important;
+            color: #fff !important;
+        }
+        .btn-success:hover {
+            background: #16a34a !important;
+        }
+
+        /* ----- PAGE CONTAINERS ----- */
+        .page {
+            display: none;
+            padding: 30px 40px 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeUp 0.45s ease;
+        }
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ----- RAIN CANVAS (login/signup bg) ----- */
+        #rainCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            display: none;
+        }
+        #rainCanvas.active {
+            display: block;
+        }
+
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .auth-card {
+            background: rgba(11, 14, 26, 0.85);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(74, 108, 247, 0.2);
+            border-radius: 28px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+        }
+        .auth-card h2 {
+            font-size: 2rem;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fff, #a0b4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .auth-card p.sub {
+            color: #8892b0;
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+        }
+
+        .auth-card label {
+            display: block;
+            font-weight: 500;
+            margin-top: 16px;
+            margin-bottom: 4px;
+            color: #c8d0e6;
+            font-size: 0.9rem;
+        }
+        .auth-card input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1.5px solid rgba(74, 108, 247, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1rem;
+            transition: 0.3s;
+            outline: none;
+        }
+        .auth-card input:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 4px rgba(74, 108, 247, 0.15);
+        }
+        .auth-card input::placeholder {
+            color: #4a5270;
+        }
+
+        .auth-card .btn-submit {
+            width: 100%;
+            padding: 14px;
+            margin-top: 24px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #4a6cf7, #7c3aed);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .auth-card .btn-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(74, 108, 247, 0.4);
+        }
+
+        .auth-card .switch-link {
+            text-align: center;
+            margin-top: 18px;
+            color: #8892b0;
+        }
+        .auth-card .switch-link a {
+            color: #4a6cf7;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .auth-card .switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-card .error-msg {
+            color: #f87171;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* ----- HOME / PUBLIC MIKAKA ----- */
+        .hero {
+            text-align: center;
+            padding: 40px 0 20px;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #a0b4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            color: #8892b0;
+            font-size: 1.15rem;
+            margin-top: 8px;
+        }
+
+        .mikeka-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .mikeka-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(74, 108, 247, 0.15);
+            border-radius: 20px;
+            padding: 24px 20px;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .mikeka-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(74, 108, 247, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        .mikeka-card .code {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4a6cf7;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .mikeka-card .desc {
+            color: #c8d0e6;
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+        .mikeka-card .meta {
+            color: #4a5270;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #4a5270;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* ----- ADMIN PANEL ----- */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .admin-header h2 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .admin-password-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 480px;
+            margin: 40px auto;
+            text-align: center;
+        }
+        .admin-password-box input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 1.5px solid rgba(251, 191, 36, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .admin-password-box input:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.15);
+        }
+        .admin-password-box .btn-unlock {
+            margin-top: 16px;
+            padding: 12px 40px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0b0e1a;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .admin-password-box .btn-unlock:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(251, 191, 36, 0.3);
+        }
+        .admin-password-box .error {
+            color: #f87171;
+            margin-top: 10px;
+            min-height: 24px;
+        }
+
+        .admin-content {
+            display: none;
+        }
+        .admin-content.show {
+            display: block;
+        }
+
+        .form-mikeka {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(74, 108, 247, 0.15);
+            border-radius: 20px;
+            padding: 28px 30px;
+            margin-bottom: 32px;
+        }
+        .form-mikeka .row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .form-mikeka .row input,
+        .form-mikeka .row textarea {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1.5px solid rgba(74, 108, 247, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .form-mikeka .row input:focus,
+        .form-mikeka .row textarea:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 4px rgba(74, 108, 247, 0.1);
+        }
+        .form-mikeka .row textarea {
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        .form-mikeka .row button {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #4a6cf7, #7c3aed);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+        .form-mikeka .row button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 30px rgba(74, 108, 247, 0.3);
+        }
+
+        .admin-mikeka-list .item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            transition: 0.2s;
+        }
+        .admin-mikeka-list .item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .admin-mikeka-list .item .info .code {
+            font-weight: 700;
+            color: #4a6cf7;
+            font-family: 'Courier New', monospace;
+        }
+        .admin-mikeka-list .item .info .desc {
+            color: #c8d0e6;
+            font-size: 0.9rem;
+        }
+        .admin-mikeka-list .item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .admin-mikeka-list .item .actions button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .admin-mikeka-list .item .actions .edit {
+            background: rgba(74, 108, 247, 0.2);
+            color: #4a6cf7;
+        }
+        .admin-mikeka-list .item .actions .edit:hover {
+            background: rgba(74, 108, 247, 0.35);
+        }
+        .admin-mikeka-list .item .actions .del {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .admin-mikeka-list .item .actions .del:hover {
+            background: rgba(239, 68, 68, 0.35);
+        }
+
+        /* ----- SHARE MODAL ----- */
+        .share-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .share-overlay.show {
+            display: flex;
+        }
+
+        .share-modal {
+            background: #1a1f33;
+            border: 1px solid rgba(74, 108, 247, 0.2);
+            border-radius: 28px;
+            padding: 40px 36px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            animation: fadeUp 0.4s ease;
+        }
+        .share-modal h2 {
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+            color: #fbbf24;
+        }
+        .share-modal p {
+            color: #8892b0;
+            margin-bottom: 20px;
+        }
+        .share-modal .share-progress {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .share-modal .share-progress .dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #4a5270;
+            transition: 0.3s;
+        }
+        .share-modal .share-progress .dot.filled {
+            background: rgba(74, 108, 247, 0.25);
+            border-color: #4a6cf7;
+            color: #fff;
+        }
+        .share-modal .share-progress .dot.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+        }
+
+        .share-modal .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 36px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #1da1f2, #0d8bd9);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 8px 4px;
+        }
+        .share-modal .share-btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(29, 161, 242, 0.3);
+        }
+        .share-modal .share-btn.whatsapp {
+            background: linear-gradient(135deg, #25d366, #128c7e);
+        }
+        .share-modal .share-btn.whatsapp:hover {
+            box-shadow: 0 8px 30px rgba(37, 211, 102, 0.3);
+        }
+        .share-modal .close-share {
+            margin-top: 16px;
+            background: transparent;
+            border: none;
+            color: #4a5270;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .share-modal .close-share:hover {
+            color: #fff;
+        }
+
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 768px) {
+            nav {
+                padding: 12px 18px;
+            }
+            .nav-brand {
+                font-size: 1.2rem;
+            }
+            .nav-links a,
+            .nav-links button {
+                padding: 6px 14px;
+                font-size: 0.8rem;
+            }
+            .page {
+                padding: 16px 16px 40px;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .auth-card {
+                padding: 32px 20px;
+            }
+            .form-mikeka .row {
+                flex-direction: column;
+            }
+            .form-mikeka .row button {
+                width: 100%;
+            }
+            .admin-mikeka-list .item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .admin-mikeka-list .item .actions {
+                justify-content: flex-end;
+            }
+            .share-modal {
+                padding: 28px 20px;
+            }
+            .share-modal .share-progress .dot {
+                width: 32px;
+                height: 32px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .nav-links {
+                justify-content: center;
+            }
+            .nav-links a,
+            .nav-links button {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+            .auth-card {
+                padding: 24px 16px;
+            }
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1a1f33;
+            border: 1px solid rgba(74, 108, 247, 0.3);
+            border-radius: 16px;
+            padding: 16px 24px;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: 0.4s ease;
+            pointer-events: none;
+            max-width: 360px;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .toast.success {
+            border-color: #22c55e;
+        }
+        .toast.error {
+            border-color: #ef4444;
+        }
+        .toast.warning {
+            border-color: #fbbf24;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(74, 108, 247, 0.15);
+            color: #4a6cf7;
+            margin-left: 6px;
+        }
+    </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Connect WhatsApp</h2>
-        <input type="text" id="num" placeholder="Ex: 2557XXXXXXXX">
-        <button onclick="getCode()">Get Code</button>
-        <div id="result"></div>
+
+    <!-- ===== TOAST ===== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ===== RAIN CANVAS ===== -->
+    <canvas id="rainCanvas"></canvas>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav>
+        <div class="nav-brand">
+            <i class="fas fa-heartbeat"></i> Hospitallink
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active" data-page="home"><i class="fas fa-home"></i> Nyumbani</a>
+            <a href="#" data-page="admin"><i class="fas fa-lock"></i> Admin</a>
+            <a href="#" data-page="login" id="navLogin"><i class="fas fa-sign-in-alt"></i> Ingia</a>
+            <a href="#" data-page="signup" id="navSignup"><i class="fas fa-user-plus"></i> Jisajili</a>
+            <button id="navLogout" style="display:none;" class="btn-outline"><i class="fas fa-sign-out-alt"></i> Toka</button>
+        </div>
+    </nav>
+
+    <!-- ===== PAGE: HOME ===== -->
+    <section id="page-home" class="page active">
+        <div class="hero">
+            <h1><i class="fas fa-code" style="-webkit-text-fill-color:#4a6cf7;"></i> Mikeka ya Jamii</h1>
+            <p>Mikeka zote zilizowekwa na admin zinaonekana hapa kwa umma.</p>
+        </div>
+        <div id="publicMikekaList" class="mikeka-grid">
+            <!-- rendered by JS -->
+        </div>
+    </section>
+
+    <!-- ===== PAGE: LOGIN ===== -->
+    <section id="page-login" class="page">
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <h2>Karibu Tena</h2>
+                <p class="sub">Ingia kwenye akaunti yako</p>
+                <form id="loginForm">
+                    <label>Barua pepe</label>
+                    <input type="email" id="loginEmail" placeholder="mfano@email.com" required />
+                    <label>Nenosiri</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required />
+                    <div class="error-msg" id="loginError"></div>
+                    <button type="submit" class="btn-submit"><i class="fas fa-arrow-right"></i> Ingia</button>
+                </form>
+                <div class="switch-link">
+                    Huna akaunti? <a id="switchToSignup">Jisajili</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PAGE: SIGNUP ===== -->
+    <section id="page-signup" class="page">
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <h2>Jisajili</h2>
+                <p class="sub">Unda akaunti yako mpya</p>
+                <form id="signupForm">
+                    <label>Barua pepe</label>
+                    <input type="email" id="signupEmail" placeholder="mfano@email.com" required />
+                    <label>Nenosiri</label>
+                    <input type="password" id="signupPassword" placeholder="•••••••• (dakika 6+) " required />
+                    <div class="error-msg" id="signupError"></div>
+                    <button type="submit" class="btn-submit"><i class="fas fa-user-plus"></i> Jisajili</button>
+                </form>
+                <div class="switch-link">
+                    Tuna akaunti? <a id="switchToLogin">Ingia</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PAGE: ADMIN ===== -->
+    <section id="page-admin" class="page">
+        <div class="admin-header">
+            <h2><i class="fas fa-shield-alt" style="-webkit-text-fill-color:#fbbf24;"></i> Sehemu ya Admin</h2>
+            <span style="color:#4a5270;font-size:0.9rem;"><i class="fas fa-key"></i> Nenosiri: <strong style="color:#fbbf24;">dvary5050</strong></span>
+        </div>
+
+        <!-- Password unlock -->
+        <div id="adminPasswordBox" class="admin-password-box">
+            <p style="color:#8892b0;margin-bottom:12px;">Weka nenosiri la admin ili kuendelea</p>
+            <input type="password" id="adminPasswordInput" placeholder="Weka nenosiri hapa" />
+            <button class="btn-unlock" id="adminUnlockBtn"><i class="fas fa-unlock"></i> Fungua</button>
+            <div class="error" id="adminPassError"></div>
+        </div>
+
+        <!-- Admin content (hidden until unlocked) -->
+        <div id="adminContent" class="admin-content">
+            <!-- Form to add mikeka -->
+            <div class="form-mikeka">
+                <h3 style="margin-bottom:16px;color:#c8d0e6;"><i class="fas fa-plus-circle" style="color:#4a6cf7;"></i> Ongeza Mikeka Mpya</h3>
+                <form id="mikekaForm">
+                    <div class="row">
+                        <input type="text" id="mikekaCode" placeholder="Msimbo / Code *" required />
+                        <textarea id="mikekaDesc" placeholder="Maelezo (hiari)"></textarea>
+                        <button type="submit"><i class="fas fa-save"></i> Hifadhi</button>
+                    </div>
+                </form>
+                <div id="formFeedback" style="color:#22c55e;margin-top:8px;min-height:20px;font-size:0.9rem;"></div>
+            </div>
+
+            <!-- List of mikeka (admin view with edit/delete) -->
+            <h3 style="color:#c8d0e6;margin-bottom:16px;"><i class="fas fa-list" style="color:#4a6cf7;"></i> Mikeka Zilizopo</h3>
+            <div id="adminMikekaList" class="admin-mikeka-list">
+                <!-- rendered by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SHARE OVERLAY ===== -->
+    <div id="shareOverlay" class="share-overlay">
+        <div class="share-modal">
+            <h2><i class="fas fa-share-alt" style="color:#1da1f2;"></i> Shiriki ili Upate Ufikiaji</h2>
+            <p>Shiriki kiungo hiki na <strong>watu 5</strong> ili ufungue ufikiaji wa sehemu ya admin na vipengele vingine.</p>
+            <div class="share-progress" id="shareProgress">
+                <!-- dots rendered by JS -->
+            </div>
+            <p style="font-size:0.9rem;color:#4a5270;" id="shareCountText">Umewashirikisha: 0 / 5</p>
+            <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0;">
+                <button class="share-btn" id="shareTwitter"><i class="fab fa-twitter"></i> Twitter</button>
+                <button class="share-btn whatsapp" id="shareWhatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button class="share-btn" id="shareCopy" style="background:linear-gradient(135deg,#6b7280,#4b5563);"><i class="fas fa-copy"></i> Nakili Kiungo</button>
+            </div>
+            <button class="close-share" id="closeShare"><i class="fas fa-times"></i> Funga</button>
+            <div id="shareStatus" style="color:#fbbf24;margin-top:8px;min-height:20px;font-size:0.9rem;"></div>
+        </div>
     </div>
-    <script src="script.js"></script>
+
+
+    <!-- ============================================================ -->
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // --------------------------------------------------------------
+            // 1. FIREBASE CONFIG — replace with YOUR web app config
+            //    (Get this from Firebase Console → Project Settings → Your apps)
+            // --------------------------------------------------------------
+            const firebaseConfig = {
+                apiKey: "AIzaSyDemoPlaceholderReplaceMe",
+                authDomain: "hospitallink-c2bf5.firebaseapp.com",
+                projectId: "hospitallink-c2bf5",
+                storageBucket: "hospitallink-c2bf5.firebasestorage.app",
+                messagingSenderId: "123456789012",
+                appId: "1:123456789012:web:abcdef123456"
+            };
+
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const auth = firebase.auth();
+
+            // --------------------------------------------------------------
+            // 2. DOM refs
+            // --------------------------------------------------------------
+            const $ = (sel) => document.querySelector(sel);
+            const $$ = (sel) => document.querySelectorAll(sel);
+
+            const pages = {
+                home: $('#page-home'),
+                login: $('#page-login'),
+                signup: $('#page-signup'),
+                admin: $('#page-admin')
+            };
+            const navLinks = $$('.nav-links a[data-page]');
+            const navLogin = $('#navLogin');
+            const navSignup = $('#navSignup');
+            const navLogout = $('#navLogout');
+
+            const loginForm = $('#loginForm');
+            const signupForm = $('#signupForm');
+            const loginEmail = $('#loginEmail');
+            const loginPass = $('#loginPassword');
+            const signupEmail = $('#signupEmail');
+            const signupPass = $('#signupPassword');
+            const loginError = $('#loginError');
+            const signupError = $('#signupError');
+
+            const adminPassBox = $('#adminPasswordBox');
+            const adminContent = $('#adminContent');
+            const adminPassInput = $('#adminPasswordInput');
+            const adminUnlockBtn = $('#adminUnlockBtn');
+            const adminPassError = $('#adminPassError');
+
+            const mikekaForm = $('#mikekaForm');
+            const mikekaCode = $('#mikekaCode');
+            const mikekaDesc = $('#mikekaDesc');
+            const formFeedback = $('#formFeedback');
+
+            const publicList = $('#publicMikekaList');
+            const adminList = $('#adminMikekaList');
+
+            const shareOverlay = $('#shareOverlay');
+            const shareProgress = $('#shareProgress');
+            const shareCountText = $('#shareCountText');
+            const shareStatus = $('#shareStatus');
+            const closeShare = $('#closeShare');
+            const shareTwitter = $('#shareTwitter');
+            const shareWhatsapp = $('#shareWhatsapp');
+            const shareCopy = $('#shareCopy');
+
+            const toast = $('#toast');
+
+            const ADMIN_PASSWORD = 'dvary5050';
+            const SHARE_TARGET = 5;
+
+            let currentUser = null; // firebase user
+            let shareCount = 0;
+            let isAdminUnlocked = false;
+            let editingDocId = null; // for edit mode
+
+            // --------------------------------------------------------------
+            // 3. RAIN EFFECT (Canvas)
+            // --------------------------------------------------------------
+            const canvas = $('#rainCanvas');
+            const ctx = canvas.getContext('2d');
+            let rainDrops = [];
+            let rainActive = false;
+            let rainAnimId = null;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            function initRain(count = 160) {
+                rainDrops = [];
+                for (let i = 0; i < count; i++) {
+                    rainDrops.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height - canvas.height,
+                        len: 8 + Math.random() * 20,
+                        speed: 4 + Math.random() * 10,
+                        opacity: 0.3 + Math.random() * 0.5,
+                        width: 1 + Math.random() * 1.5
+                    });
+                }
+            }
+
+            function drawRain() {
+                if (!rainActive) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(180, 210, 255, 0.6)';
+                ctx.lineCap = 'round';
+
+                for (const d of rainDrops) {
+                    ctx.beginPath();
+                    ctx.moveTo(d.x, d.y);
+                    ctx.lineTo(d.x - 2, d.y + d.len);
+                    ctx.strokeStyle = `rgba(160, 200, 255, ${d.opacity * 0.5})`;
+                    ctx.lineWidth = d.width;
+                    ctx.stroke();
+
+                    // subtle glow
+                    ctx.shadowColor = 'rgba(74, 108, 247, 0.1)';
+                    ctx.shadowBlur = 6;
+
+                    d.y += d.speed;
+                    if (d.y > canvas.height + 30) {
+                        d.y = -20 - Math.random() * 40;
+                        d.x = Math.random() * canvas.width;
+                        d.speed = 4 + Math.random() * 10;
+                    }
+                }
+                rainAnimId = requestAnimationFrame(drawRain);
+            }
+
+            function startRain() {
+                if (rainActive) return;
+                rainActive = true;
+                canvas.classList.add('active');
+                initRain(180);
+                if (rainAnimId) cancelAnimationFrame(rainAnimId);
+                drawRain();
+            }
+
+            function stopRain() {
+                rainActive = false;
+                canvas.classList.remove('active');
+                if (rainAnimId) {
+                    cancelAnimationFrame(rainAnimId);
+                    rainAnimId = null;
+                }
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // --------------------------------------------------------------
+            // 4. NAVIGATION
+            // --------------------------------------------------------------
+            function showPage(pageId) {
+                // hide all pages
+                Object.values(pages).forEach(p => p.classList.remove('active'));
+                // show target
+                if (pages[pageId]) pages[pageId].classList.add('active');
+
+                // update nav active
+                navLinks.forEach(a => {
+                    a.classList.toggle('active', a.dataset.page === pageId);
+                });
+
+                // rain control
+                if (pageId === 'login' || pageId === 'signup') {
+                    startRain();
+                } else {
+                    stopRain();
+                }
+
+                // scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // refresh lists
+                if (pageId === 'home') loadPublicMikeka();
+                if (pageId === 'admin' && isAdminUnlocked) loadAdminMikeka();
+            }
+
+            navLinks.forEach(a => {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = a.dataset.page;
+                    // if admin, check if already unlocked
+                    if (page === 'admin' && !isAdminUnlocked) {
+                        // show admin page but with password box
+                        showPage('admin');
+                        return;
+                    }
+                    showPage(page);
+                });
+            });
+
+            // switch between login / signup
+            $('#switchToSignup').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('signup');
+            });
+            $('#switchToLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('login');
+            });
+
+            navLogout.addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    showToast('Umefanikiwa kutoka.', 'success');
+                    updateAuthUI(null);
+                    showPage('home');
+                }).catch(err => {
+                    showToast(err.message, 'error');
+                });
+            });
+
+            // --------------------------------------------------------------
+            // 5. AUTH UI STATE
+            // --------------------------------------------------------------
+            function updateAuthUI(user) {
+                currentUser = user;
+                if (user) {
+                    navLogin.style.display = 'none';
+                    navSignup.style.display = 'none';
+                    navLogout.style.display = 'inline-flex';
+                    // check share status
+                    checkShareStatus(user.uid);
+                } else {
+                    navLogin.style.display = 'inline-flex';
+                    navSignup.style.display = 'inline-flex';
+                    navLogout.style.display = 'none';
+                    shareOverlay.classList.remove('show');
+                    isAdminUnlocked = false;
+                    adminContent.classList.remove('show');
+                    adminPassBox.style.display = 'block';
+                }
+            }
+
+            // --------------------------------------------------------------
+            // 6. AUTH: Login / Signup
+            // --------------------------------------------------------------
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                loginError.textContent = '';
+                const email = loginEmail.value.trim();
+                const pass = loginPass.value;
+                if (!email || !pass) {
+                    loginError.textContent = 'Tafadhali jaza sehemu zote.';
+                    return;
+                }
+                auth.signInWithEmailAndPassword(email, pass)
+                    .then((cred) => {
+                        showToast('Karibu tena!', 'success');
+                        loginForm.reset();
+                        updateAuthUI(cred.user);
+                        showPage('home');
+                    })
+                    .catch((err) => {
+                        loginError.textContent = err.message;
+                    });
+            });
+
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                signupError.textContent = '';
+                const email = signupEmail.value.trim();
+                const pass = signupPass.value;
+                if (!email || !pass) {
+                    signupError.textContent = 'Tafadhali jaza sehemu zote.';
+                    return;
+                }
+                if (pass.length < 6) {
+                    signupError.textContent = 'Nenosiri lazima liwe na herufi 6 au zaidi.';
+                    return;
+                }
+                auth.createUserWithEmailAndPassword(email, pass)
+                    .then((cred) => {
+                        showToast('Akaunti imeundwa! Karibu.', 'success');
+                        signupForm.reset();
+                        // create user doc in firestore
+                        db.collection('users').doc(cred.user.uid).set({
+                            email: email,
+                            shareCount: 0,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).catch(() => {});
+                        updateAuthUI(cred.user);
+                        showPage('home');
+                        // show share overlay
+                        setTimeout(() => {
+                            checkShareStatus(cred.user.uid);
+                        }, 600);
+                    })
+                    .catch((err) => {
+                        signupError.textContent = err.message;
+                    });
+            });
+
+            // --------------------------------------------------------------
+            // 7. SHARE SYSTEM
+            // --------------------------------------------------------------
+            async function checkShareStatus(uid) {
+                try {
+                    const doc = await db.collection('users').doc(uid).get();
+                    if (doc.exists) {
+                        const data = doc.data();
+                        shareCount = data.shareCount || 0;
+                        updateShareUI();
+                        if (shareCount < SHARE_TARGET) {
+                            shareOverlay.classList.add('show');
+                        } else {
+                            shareOverlay.classList.remove('show');
+                        }
+                    } else {
+                        // create user doc
+                        await db.collection('users').doc(uid).set({
+                            email: currentUser ? currentUser.email : '',
+                            shareCount: 0,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        shareCount = 0;
+                        updateShareUI();
+                        shareOverlay.classList.add('show');
+                    }
+                } catch (err) {
+                    console.warn('Share check error:', err);
+                }
+            }
+
+            function updateShareUI() {
+                // update dots
+                shareProgress.innerHTML = '';
+                for (let i = 0; i < SHARE_TARGET; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    if (i < shareCount) dot.classList.add('filled');
+                    if (i === shareCount && shareCount < SHARE_TARGET) dot.classList.add('active');
+                    dot.textContent = i < shareCount ? '✓' : (i + 1);
+                    shareProgress.appendChild(dot);
+                }
+                shareCountText.textContent = `Umewashirikisha: ${shareCount} / ${SHARE_TARGET}`;
+                if (shareCount >= SHARE_TARGET) {
+                    shareCountText.textContent = '✅ Umefanikiwa! Ufikiaji umefunguliwa.';
+                    shareStatus.textContent = 'Hongera! Sasa unaweza kuingia sehemu ya admin.';
+                    shareStatus.style.color = '#22c55e';
+                } else {
+                    shareStatus.textContent = `Shiriki na watu ${SHARE_TARGET - shareCount} waliobaki.`;
+                    shareStatus.style.color = '#fbbf24';
+                }
+            }
+
+            // Share functions
+            function getShareUrl() {
+                // Use current page URL + share param
+                const url = new URL(window.location.href);
+                url.searchParams.set('ref', currentUser ? currentUser.uid : '');
+                return url.toString();
+            }
+
+            function recordShare() {
+                if (!currentUser) return;
+                const uid = currentUser.uid;
+                db.collection('users').doc(uid).get().then(doc => {
+                    let current = 0;
+                    if (doc.exists) current = doc.data().shareCount || 0;
+                    if (current >= SHARE_TARGET) {
+                        showToast('Tayari umeshiriki vya kutosha!', 'warning');
+                        return;
+                    }
+                    const newCount = current + 1;
+                    db.collection('users').doc(uid).update({
+                        shareCount: newCount
+                    }).then(() => {
+                        shareCount = newCount;
+                        updateShareUI();
+                        showToast(`Umewashirikisha ${newCount} / ${SHARE_TARGET}`, 'success');
+                        if (newCount >= SHARE_TARGET) {
+                            shareOverlay.classList.remove('show');
+                            showToast('Hongera! Ufikiaji umefunguliwa!', 'success');
+                        }
+                    }).catch(err => {
+                        showToast('Hitilafu: ' + err.message, 'error');
+                    });
+                }).catch(err => {
+                    showToast('Hitilafu: ' + err.message, 'error');
+                });
+            }
+
+            shareTwitter.addEventListener('click', () => {
+                const url = getShareUrl();
+                const text = 'Natangaza mikeka ya Hospitallink! Jiunge nami.';
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                    '_blank');
+                recordShare();
+            });
+
+            shareWhatsapp.addEventListener('click', () => {
+                const url = getShareUrl();
+                const text = 'Natangaza mikeka ya Hospitallink! Jiunge nami.';
+                window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                recordShare();
+            });
+
+            shareCopy.addEventListener('click', () => {
+                const url = getShareUrl();
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Kiungo kimenakiliwa!', 'success');
+                    recordShare();
+                }).catch(() => {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    showToast('Kiungo kimenakiliwa!', 'success');
+                    recordShare();
+                });
+            });
+
+            closeShare.addEventListener('click', () => {
+                if (shareCount >= SHARE_TARGET) {
+                    shareOverlay.classList.remove('show');
+                } else {
+                    showToast('Tafadhali shiriki na watu 5 ili kupata ufikiaji.', 'warning');
+                }
+            });
+
+            // --------------------------------------------------------------
+            // 8. ADMIN UNLOCK
+            // --------------------------------------------------------------
+            adminUnlockBtn.addEventListener('click', () => {
+                const pass = adminPassInput.value.trim();
+                adminPassError.textContent = '';
+                if (pass === ADMIN_PASSWORD) {
+                    isAdminUnlocked = true;
+                    adminPassBox.style.display = 'none';
+                    adminContent.classList.add('show');
+                    showToast('Admin imefunguliwa!', 'success');
+                    loadAdminMikeka();
+                } else {
+                    adminPassError.textContent = '❌ Nenosiri si sahihi. Jaribu tena.';
+                    adminPassInput.value = '';
+                    adminPassInput.focus();
+                }
+            });
+
+            adminPassInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') adminUnlockBtn.click();
+            });
+
+            // If user clicks admin tab and already unlocked, show content
+            // handled in showPage
+
+            // --------------------------------------------------------------
+            // 9. MIKAKA CRUD
+            // --------------------------------------------------------------
+
+            // --- Load public mikeka ---
+            async function loadPublicMikeka() {
+                try {
+                    const snapshot = await db.collection('mikeka')
+                        .orderBy('createdAt', 'desc')
+                        .get();
+                    publicList.innerHTML = '';
+                    if (snapshot.empty) {
+                        publicList.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Hakuna mikeka bado. Admin atasta kuziongeza.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const card = document.createElement('div');
+                        card.className = 'mikeka-card';
+                        card.innerHTML = `
+                            <div class="code">${escapeHtml(data.code || '---')}</div>
+                            <div class="desc">${escapeHtml(data.description || 'Hakuna maelezo')}</div>
+                            <div class="meta">
+                                <span><i class="far fa-calendar-alt"></i> ${data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('sw') : 'sasa hivi'}</span>
+                                <span><i class="far fa-user"></i> ${escapeHtml(data.createdBy || 'Admin')}</span>
+                            </div>
+                        `;
+                        publicList.appendChild(card);
+                    });
+                } catch (err) {
+                    console.error('Load public mikeka error:', err);
+                    publicList.innerHTML = `<div class="empty-state"><p>❌ Hitilafu ilitokea: ${err.message}</p></div>`;
+                }
+            }
+
+            // --- Load admin mikeka (with edit/delete) ---
+            async function loadAdminMikeka() {
+                if (!isAdminUnlocked) return;
+                try {
+                    const snapshot = await db.collection('mikeka')
+                        .orderBy('createdAt', 'desc')
+                        .get();
+                    adminList.innerHTML = '';
+                    if (snapshot.empty) {
+                        adminList.innerHTML = `<p style="color:#4a5270;">Hakuna mikeka. Anza kuongeza!</p>`;
+                        return;
+                    }
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const item = document.createElement('div');
+                        item.className = 'item';
+                        item.innerHTML = `
+                            <div class="info">
+                                <div class="code">${escapeHtml(data.code || '---')}</div>
+                                <div class="desc">${escapeHtml(data.description || 'Hakuna maelezo')}</div>
+                            </div>
+                            <div class="actions">
+                                <button class="edit" data-id="${doc.id}"><i class="fas fa-edit"></i> Hariri</button>
+                                <button class="del" data-id="${doc.id}"><i class="fas fa-trash"></i> Futa</button>
+                            </div>
+                        `;
+                        adminList.appendChild(item);
+
+                        // edit
+                        item.querySelector('.edit').addEventListener('click', () => {
+                            editingDocId = doc.id;
+                            mikekaCode.value = data.code || '';
+                            mikekaDesc.value = data.description || '';
+                            mikekaForm.querySelector('button').innerHTML =
+                                '<i class="fas fa-save"></i> Sasisha';
+                            formFeedback.textContent = '🔧 Unahariri: ' + (data.code || '');
+                            formFeedback.style.color = '#fbbf24';
+                            mikekaCode.focus();
+                        });
+
+                        // delete
+                        item.querySelector('.del').addEventListener('click', () => {
+                            if (confirm('Je, una uhakika unataka kufuta mikeka hii?')) {
+                                db.collection('mikeka').doc(doc.id).delete()
+                                    .then(() => {
+                                        showToast('Mikeka imefutwa!', 'success');
+                                        loadAdminMikeka();
+                                        loadPublicMikeka();
+                                    })
+                                    .catch(err => {
+                                        showToast('Hitilafu: ' + err.message, 'error');
+                                    });
+                            }
+                        });
+                    });
+                } catch (err) {
+                    console.error('Load admin mikeka error:', err);
+                    adminList.innerHTML = `<p style="color:#f87171;">❌ Hitilafu: ${err.message}</p>`;
+                }
+            }
+
+            // --- Add / Update mikeka ---
+            mikekaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!isAdminUnlocked) {
+                    showToast('Tafadhali fungua admin kwanza.', 'warning');
+                    return;
+                }
+                if (!currentUser) {
+                    showToast('Tafadhali ingia kwanza.', 'warning');
+                    return;
+                }
+                const code = mikekaCode.value.trim();
+                if (!code) {
+                    formFeedback.textContent = '❌ Tafadhali weka msimbo.';
+                    formFeedback.style.color = '#f87171';
+                    return;
+                }
+                const desc = mikekaDesc.value.trim();
+
+                const data = {
+                    code: code,
+                    description: desc || '',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedBy: currentUser.email || 'Admin'
+                };
+
+                if (editingDocId) {
+                    // UPDATE
+                    db.collection('mikeka').doc(editingDocId).update(data)
+                        .then(() => {
+                            showToast('Mikeka imesasishwa!', 'success');
+                            formFeedback.textContent = '✅ Imesasishwa!';
+                            formFeedback.style.color = '#22c55e';
+                            resetForm();
+                            loadAdminMikeka();
+                            loadPublicMikeka();
+                        })
+                        .catch(err => {
+                            formFeedback.textContent = '❌ ' + err.message;
+                            formFeedback.style.color = '#f87171';
+                        });
+                } else {
+                    // ADD
+                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    data.createdBy = currentUser.email || 'Admin';
+                    db.collection('mikeka').add(data)
+                        .then(() => {
+                            showToast('Mikeka imeongezwa!', 'success');
+                            formFeedback.textContent = '✅ Imehifadhiwa!';
+                            formFeedback.style.color = '#22c55e';
+                            resetForm();
+                            loadAdminMikeka();
+                            loadPublicMikeka();
+                        })
+                        .catch(err => {
+                            formFeedback.textContent = '❌ ' + err.message;
+                            formFeedback.style.color = '#f87171';
+                        });
+                }
+            });
+
+            function resetForm() {
+                mikekaCode.value = '';
+                mikekaDesc.value = '';
+                editingDocId = null;
+                mikekaForm.querySelector('button').innerHTML = '<i class="fas fa-save"></i> Hifadhi';
+                formFeedback.textContent = '';
+            }
+
+            // --------------------------------------------------------------
+            // 10. TOAST
+            // --------------------------------------------------------------
+            let toastTimeout = null;
+
+            function showToast(msg, type = 'info') {
+                toast.textContent = msg;
+                toast.className = 'toast';
+                if (type) toast.classList.add(type);
+                toast.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3500);
+            }
+
+            // --------------------------------------------------------------
+            // 11. HELPERS
+            // --------------------------------------------------------------
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // --------------------------------------------------------------
+            // 12. AUTH STATE LISTENER
+            // --------------------------------------------------------------
+            auth.onAuthStateChanged((user) => {
+                updateAuthUI(user);
+                if (user) {
+                    // load data
+                    loadPublicMikeka();
+                    // if admin is unlocked, load admin list
+                    if (isAdminUnlocked) loadAdminMikeka();
+                    // check share status
+                    checkShareStatus(user.uid);
+                } else {
+                    // reset admin unlock
+                    isAdminUnlocked = false;
+                    adminContent.classList.remove('show');
+                    adminPassBox.style.display = 'block';
+                    adminPassInput.value = '';
+                    adminPassError.textContent = '';
+                    loadPublicMikeka();
+                }
+            });
+
+            // --------------------------------------------------------------
+            // 13. INIT
+            // --------------------------------------------------------------
+            // load public mikeka on startup
+            loadPublicMikeka();
+
+            // if we have a share ref in URL, record it
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref && ref.length > 10) {
+                // someone shared and clicked
+                // we'll record this as a share for the referrer
+                db.collection('users').doc(ref).get().then(doc => {
+                    if (doc.exists) {
+                        const current = doc.data().shareCount || 0;
+                        if (current < SHARE_TARGET) {
+                            db.collection('users').doc(ref).update({
+                                shareCount: current + 1
+                            }).then(() => {
+                                showToast('Asante kwa kushiriki!', 'success');
+                            }).catch(() => {});
+                        }
+                    }
+                }).catch(() => {});
+                // clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // show home by default
+            showPage('home');
+
+            // handle window resize for rain
+            window.addEventListener('resize', () => {
+                if (rainActive) resizeCanvas();
+            });
+
+            // --------------------------------------------------------------
+            // 14. KEYBOARD SHORTCUT: ESC to close share
+            // --------------------------------------------------------------
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (shareOverlay.classList.contains('show')) {
+                        if (shareCount >= SHARE_TARGET) {
+                            shareOverlay.classList.remove('show');
+                        } else {
+                            showToast('Shiriki na watu 5 kwanza.', 'warning');
+                        }
+                    }
+                }
+            });
+
+            console.log('✅ Hospitallink Mikeka System imeanzishwa!');
+            console.log('🔑 Nenosiri la Admin: dvary5050');
+            console.log('📤 Shiriki na watu 5 ili kupata ufikiaji kamili.');
+
+        })();
+    </script>
+
 </body>
 </html>
-
