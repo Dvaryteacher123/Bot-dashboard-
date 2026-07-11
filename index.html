@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Premium Login & Sign Up</title>
+
+    <!-- Firebase SDKs (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+    </script>
+
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ----- RESET & BASE ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0e1a;
+            transition: background 0.4s ease, color 0.4s ease;
+            padding: 20px;
+        }
+
+        body.light-mode {
+            background: #f0f4ff;
+            color: #1a1f36;
+        }
+
+        body.light-mode .auth-card {
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.08);
+        }
+
+        body.light-mode .auth-card input {
+            background: rgba(0, 0, 0, 0.04);
+            color: #1a1f36;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .auth-card input:focus {
+            border-color: #4f6ef7;
+            box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.1);
+        }
+
+        body.light-mode .auth-card label {
+            color: #3a405b;
+        }
+
+        body.light-mode .auth-card .sub {
+            color: #5a6a8a;
+        }
+
+        body.light-mode .auth-card .divider::before,
+        body.light-mode .auth-card .divider::after {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        body.light-mode .auth-card .switch-link {
+            color: #5a6a8a;
+        }
+
+        body.light-mode .auth-card .input-group i {
+            color: #7a8aaa;
+        }
+
+        body.light-mode .auth-card .btn-google {
+            background: #fff;
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #1a1f36;
+        }
+
+        body.light-mode .auth-card .btn-google:hover {
+            background: #f8faff;
+        }
+
+        body.light-mode .strength-bar {
+            background: #e2e8f0;
+        }
+
+        /* ----- THEME TOGGLE ----- */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            padding: 10px 14px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.2rem;
+            backdrop-filter: blur(8px);
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.light-mode .theme-toggle {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #1a1f36;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.04);
+        }
+
+        /* ----- MAIN CARD ----- */
+        .auth-wrapper {
+            width: 100%;
+            max-width: 460px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-card {
+            background: rgba(20, 27, 45, 0.75);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 40px;
+            padding: 48px 40px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(79, 110, 247, 0.03), transparent 60%);
+            pointer-events: none;
+        }
+
+        .auth-card .logo {
+            text-align: center;
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4f6ef7, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+            letter-spacing: -1px;
+        }
+
+        .auth-card .logo i {
+            -webkit-text-fill-color: #4f6ef7;
+            margin-right: 6px;
+        }
+
+        .auth-card h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            color: #fff;
+            margin-top: 4px;
+        }
+
+        body.light-mode .auth-card h2 {
+            color: #1a1f36;
+        }
+
+        .auth-card .sub {
+            text-align: center;
+            color: #8896b8;
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+            font-weight: 400;
+        }
+
+        body.light-mode .auth-card .sub {
+            color: #5a6a8a;
+        }
+
+        .auth-card label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: #c8d4ed;
+            letter-spacing: 0.3px;
+        }
+
+        body.light-mode .auth-card label {
+            color: #3a405b;
+        }
+
+        .auth-card .input-group {
+            position: relative;
+            margin-bottom: 18px;
+        }
+
+        .auth-card .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4a5a7a;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .auth-card .input-group input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border-radius: 18px;
+            border: 1.5px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1rem;
+            transition: 0.3s;
+            outline: none;
+        }
+
+        body.light-mode .auth-card .input-group input {
+            background: rgba(0, 0, 0, 0.04);
+            color: #1a1f36;
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .auth-card .input-group input:focus {
+            border-color: #4f6ef7;
+            box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.1);
+        }
+
+        .auth-card .input-group input::placeholder {
+            color: #4a5a7a;
+        }
+
+        body.light-mode .auth-card .input-group input::placeholder {
+            color: #8a9ab8;
+        }
+
+        .auth-card .input-group .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #4a5a7a;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+        }
+
+        body.light-mode .auth-card .input-group .toggle-password {
+            color: #7a8aaa;
+        }
+
+        /* ----- PASSWORD STRENGTH ----- */
+        .strength-container {
+            margin-top: -10px;
+            margin-bottom: 16px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .strength-bar .fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.4s ease, background 0.4s ease;
+        }
+
+        .strength-text {
+            font-size: 0.75rem;
+            color: #4a5a7a;
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        body.light-mode .strength-text {
+            color: #6a7a9a;
+        }
+
+        /* ----- CHECKBOXES ----- */
+        .auth-card .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 0 18px;
+            font-size: 0.9rem;
+            color: #c8d4ed;
+        }
+
+        body.light-mode .auth-card .checkbox-group {
+            color: #3a405b;
+        }
+
+        .auth-card .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f6ef7;
+            cursor: pointer;
+        }
+
+        .auth-card .checkbox-group label {
+            margin: 0;
+            font-weight: 400;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .auth-card .forgot-link {
+            text-align: right;
+            margin-top: -6px;
+            margin-bottom: 16px;
+        }
+
+        .auth-card .forgot-link a {
+            color: #4f6ef7;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .auth-card .forgot-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* ----- BUTTONS ----- */
+        .auth-card .btn-submit {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 40px;
+            background: linear-gradient(135deg, #4f6ef7, #7c3aed);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card .btn-submit:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px rgba(79, 110, 247, 0.3);
+        }
+
+        .auth-card .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .auth-card .btn-submit .spinner {
+            display: none;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .auth-card .btn-submit.loading .spinner {
+            display: inline-block;
+        }
+
+        .auth-card .btn-submit.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .auth-card .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: #4a5a7a;
+            font-size: 0.85rem;
+        }
+
+        .auth-card .divider::before,
+        .auth-card .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        body.light-mode .auth-card .divider::before,
+        body.light-mode .auth-card .divider::after {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .auth-card .btn-google {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid rgba(255, 255, 255, 0.06);
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .auth-card .btn-google:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: scale(1.01);
+        }
+
+        .auth-card .btn-google i {
+            color: #ea4335;
+            font-size: 1.2rem;
+        }
+
+        .auth-card .switch-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #8896b8;
+            font-size: 0.95rem;
+        }
+
+        body.light-mode .auth-card .switch-link {
+            color: #5a6a8a;
+        }
+
+        .auth-card .switch-link a {
+            color: #4f6ef7;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .auth-card .switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-card .error-msg {
+            color: #f87171;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* ----- DASHBOARD (after login) ----- */
+        #dashboard {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            animation: fadeUp 0.5s ease;
+        }
+
+        #dashboard.active {
+            display: block;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border-radius: 30px;
+            padding: 20px 28px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .dashboard-header {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-profile .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f6ef7, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .user-profile .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-profile .info .name {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .user-profile .info .email {
+            color: #8896b8;
+            font-size: 0.9rem;
+        }
+
+        body.light-mode .user-profile .info .email {
+            color: #5a6a8a;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-actions button {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-actions .btn-settings {
+            background: rgba(255, 255, 255, 0.06);
+            color: #c8d4ed;
+        }
+
+        body.light-mode .dashboard-actions .btn-settings {
+            background: rgba(0, 0, 0, 0.04);
+            color: #3a405b;
+        }
+
+        .dashboard-actions .btn-settings:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dashboard-actions .btn-notif {
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+        }
+
+        .dashboard-actions .btn-notif:hover {
+            background: rgba(251, 191, 36, 0.2);
+        }
+
+        .dashboard-actions .btn-logout {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .dashboard-actions .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 28px 30px;
+            backdrop-filter: blur(8px);
+            transition: 0.3s;
+        }
+
+        body.light-mode .dashboard-card {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-card h3 {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dashboard-card h3 i {
+            color: #4f6ef7;
+        }
+
+        .dashboard-card p {
+            color: #8896b8;
+            line-height: 1.7;
+        }
+
+        body.light-mode .dashboard-card p {
+            color: #5a6a8a;
+        }
+
+        .settings-section {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .settings-section.show {
+            display: block;
+        }
+
+        .settings-section label {
+            display: block;
+            font-weight: 600;
+            margin-top: 14px;
+            margin-bottom: 4px;
+            color: #c8d4ed;
+        }
+
+        body.light-mode .settings-section label {
+            color: #3a405b;
+        }
+
+        .settings-section input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1.5px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        body.light-mode .settings-section input {
+            background: rgba(0, 0, 0, 0.04);
+            color: #1a1f36;
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .settings-section input:focus {
+            border-color: #4f6ef7;
+            box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.1);
+        }
+
+        .settings-section .btn-update {
+            margin-top: 16px;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 40px;
+            background: linear-gradient(135deg, #4f6ef7, #7c3aed);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .settings-section .btn-update:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(79, 110, 247, 0.25);
+        }
+
+        .notif-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .notif-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            color: #c8d4ed;
+        }
+
+        body.light-mode .notif-list li {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            color: #3a405b;
+        }
+
+        .notif-list li i {
+            color: #fbbf24;
+            font-size: 1.2rem;
+        }
+
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 32px 20px;
+            }
+
+            .auth-card .logo {
+                font-size: 2rem;
+            }
+
+            .auth-card h2 {
+                font-size: 1.6rem;
+            }
+
+            .auth-card .input-group input {
+                padding: 12px 16px 12px 42px;
+                font-size: 0.95rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .dashboard-actions {
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeUp 0.5s ease;
+        }
+
+        /* Toast messages */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            width: 100%;
+        }
+
+        .toast {
+            background: rgba(20, 27, 45, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 16px 22px;
+            color: #fff;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 500;
+        }
+
+        body.light-mode .toast {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1a1f36;
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #fbbf24;
+        }
+
+        .toast i {
+            font-size: 1.4rem;
+        }
+
+        .toast.success i {
+            color: #22c55e;
+        }
+
+        .toast.error i {
+            color: #ef4444;
+        }
+
+        .toast.warning i {
+            color: #fbbf24;
+        }
+
+        /* Hide auth forms when dashboard active */
+        .auth-wrapper.hide {
+            display: none;
+        }
+
+        /* Upload avatar preview */
+        .avatar-upload {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 12px 0 18px;
+        }
+
+        .avatar-upload .avatar-preview {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 1.6rem;
+            color: #4a5a7a;
+        }
+
+        body.light-mode .avatar-upload .avatar-preview {
+            border-color: rgba(0, 0, 0, 0.08);
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .avatar-upload input[type="file"] {
+            display: none;
+        }
+
+        .avatar-upload .upload-btn {
+            padding: 8px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #c8d4ed;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+
+        body.light-mode .avatar-upload .upload-btn {
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #3a405b;
+        }
+
+        .avatar-upload .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Firebase error banner */
+        .firebase-error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: #f87171;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .firebase-error-banner i {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== THEME TOGGLE ===== -->
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon" id="themeIcon"></i>
+        <span id="themeLabel">Dark</span>
+    </button>
+
+    <!-- ===== AUTH WRAPPER ===== -->
+    <div class="auth-wrapper" id="authWrapper">
+        <div class="auth-card" id="authCard">
+            <!-- Firebase Error Banner (hidden by default) -->
+            <div id="firebaseErrorBanner" class="firebase-error-banner" style="display:none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="firebaseErrorText">Hitilafu ya Firebase. Tumia localStorage.</span>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <div id="loginFormContainer">
+                <div class="logo"><i class="fas fa-bolt"></i> Premium</div>
+                <h2>Karibu Tena</h2>
+                <p class="sub">Ingia kwenye akaunti yako</p>
+
+                <form id="loginForm" autocomplete="off">
+                    <label>Barua pepe</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="mfano@email.com" required />
+                    </div>
+
+                    <label>Nenosiri</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required />
+                        <button type="button" class="toggle-password" data-target="loginPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="rememberMe" checked />
+                        <label for="rememberMe">Nikumbuke</label>
+                    </div>
+
+                    <div class="forgot-link">
+                        <a id="forgotPasswordLink">Umesahau nenosiri?</a>
+                    </div>
+
+                    <div class="error-msg" id="loginError"></div>
+
+                    <button type="submit" class="btn-submit" id="loginBtn">
+                        <span class="spinner"></span>
+                        <span class="btn-text"><i class="fas fa-arrow-right"></i> Ingia</span>
+                    </button>
+                </form>
+
+                <div class="divider">au</div>
+
+                <button class="btn-google" id="googleLoginBtn">
+                    <i class="fab fa-google"></i> Ingia kwa Google
+                </button>
+
+                <div class="switch-link">
+                    Huna akaunti? <a id="switchToSignup">Jisajili</a>
+                </div>
+            </div>
+
+            <!-- SIGNUP FORM -->
+            <div id="signupFormContainer" style="display:none;">
+                <div class="logo"><i class="fas fa-bolt"></i> Premium</div>
+                <h2>Jisajili</h2>
+                <p class="sub">Unda akaunti yako bure</p>
+
+                <form id="signupForm" autocomplete="off">
+                    <label>Jina Kamili</label>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="signupFullName" placeholder="Jina lako" required />
+                    </div>
+
+                    <label>Jina la Mtumiaji</label>
+                    <div class="input-group">
+                        <i class="fas fa-at"></i>
+                        <input type="text" id="signupUsername" placeholder="username" required />
+                    </div>
+
+                    <label>Barua pepe</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="signupEmail" placeholder="mfano@email.com" required />
+                    </div>
+
+                    <label>Nenosiri</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="signupPassword" placeholder="Angalau herufi 6" required />
+                        <button type="button" class="toggle-password" data-target="signupPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="strength-container">
+                        <div class="strength-bar">
+                            <div class="fill" id="strengthFill"></div>
+                        </div>
+                        <div class="strength-text">
+                            <span id="strengthLabel">Nguvu ya nenosiri</span>
+                            <span id="strengthScore">0%</span>
+                        </div>
+                    </div>
+
+                    <label>Thibitisha Nenosiri</label>
+                    <div class="input-group">
+                        <i class="fas fa-check-circle"></i>
+                        <input type="password" id="signupConfirmPassword" placeholder="Andika tena nenosiri" required />
+                        <button type="button" class="toggle-password" data-target="signupConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="avatar-upload">
+                        <div class="avatar-preview" id="avatarPreview">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <button type="button" class="upload-btn" id="avatarUploadBtn">
+                            <i class="fas fa-upload"></i> Chagua picha
+                        </button>
+                        <input type="file" id="avatarInput" accept="image/*" />
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="termsCheck" required />
+                        <label for="termsCheck">Nakubali <a href="#" style="color:#4f6ef7;">Masharti na Sera</a></label>
+                    </div>
+
+                    <div class="error-msg" id="signupError"></div>
+
+                    <button type="submit" class="btn-submit" id="signupBtn">
+                        <span class="spinner"></span>
+                        <span class="btn-text"><i class="fas fa-user-plus"></i> Unda Akaunti</span>
+                    </button>
+                </form>
+
+                <div class="divider">au</div>
+
+                <button class="btn-google" id="googleSignupBtn">
+                    <i class="fab fa-google"></i> Jisajili kwa Google
+                </button>
+
+                <div class="switch-link">
+                    Tuna akaunti? <a id="switchToLogin">Ingia</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DASHBOARD (after login) ===== -->
+    <div id="dashboard">
+        <div class="dashboard-header">
+            <div class="user-profile">
+                <div class="avatar" id="dashboardAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="info">
+                    <div class="name" id="dashboardName">Mtumiaji</div>
+                    <div class="email" id="dashboardEmail">email@example.com</div>
+                </div>
+            </div>
+            <div class="dashboard-actions">
+                <button class="btn-settings" id="settingsToggle"><i class="fas fa-cog"></i> Mipangilio</button>
+                <button class="btn-notif" id="notifToggle"><i class="fas fa-bell"></i> Arifa</button>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Toka</button>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="dashboard-card">
+                <h3><i class="fas fa-user"></i> Taarifa</h3>
+                <p><strong>Jina:</strong> <span id="profileFullName">-</span></p>
+                <p><strong>Jina la mtumiaji:</strong> <span id="profileUsername">-</span></p>
+                <p><strong>Barua pepe:</strong> <span id="profileEmail">-</span></p>
+                <p><strong>Akaunti imethibitishwa:</strong> <span id="profileVerified">Hapana</span></p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><i class="fas fa-star"></i> Vipengele</h3>
+                <p>Karibu kwenye dashibodi yako. Hapa unaweza kuona maelezo yako, kusimamia mipangilio, na kuangalia arifa.</p>
+                <p style="margin-top:10px;color:#fbbf24;"><i class="fas fa-bolt"></i> Free Odd & Mikeka zako ziko tayari!</p>
+            </div>
+
+            <!-- Settings section inside first card -->
+            <div class="dashboard-card" style="grid-column: 1 / -1;">
+                <h3><i class="fas fa-cog"></i> Mipangilio</h3>
+                <div id="settingsSection" class="settings-section">
+                    <label>Jina Kamili</label>
+                    <input type="text" id="settingsFullName" placeholder="Jina lako" />
+                    <label>Jina la Mtumiaji</label>
+                    <input type="text" id="settingsUsername" placeholder="username" />
+                    <button class="btn-update" id="updateProfileBtn">Sasisha</button>
+                    <div id="settingsFeedback" style="margin-top:10px;color:#22c55e;"></div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="dashboard-card" style="grid-column: 1 / -1;">
+                <h3><i class="fas fa-bell"></i> Arifa</h3>
+                <div id="notifSection" class="settings-section">
+                    <ul class="notif-list" id="notifList">
+                        <li><i class="fas fa-bolt"></i> Karibu kwenye Premium! Akaunti yako imeundwa.</li>
+                        <li><i class="fas fa-info-circle"></i> Unaweza kubadilisha mipangilio yako wakati wowote.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // --------------------------------------------------------------
+            // 1. FIREBASE CONFIG — TUMIA CONFIG YAKO HALISI
+            // --------------------------------------------------------------
+            const firebaseConfig = {
+                apiKey: "AIzaSyDR849EK1RofT-1Re5th7BM5M4SEl9kXOE",
+                authDomain: "hospitallink-c2bf5.firebaseapp.com",
+                projectId: "hospitallink-c2bf5",
+                storageBucket: "hospitallink-c2bf5.firebasestorage.app",
+                messagingSenderId: "606259613120",
+                appId: "1:606259613120:web:08812a74e04a397f9b8c25",
+                measurementId: "G-ZRGPVMZWDC"
+            };
+
+            let useFirebase = false;
+            let auth = null;
+            let db = null;
+            let firebaseError = null;
+
+            // Jaribu kuunganisha Firebase
+            try {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                useFirebase = true;
+                console.log('✅ Firebase imeunganishwa kikamilifu.');
+            } catch (err) {
+                firebaseError = err.message;
+                console.warn('⚠️ Hitilafu ya Firebase:', err.message);
+                console.warn('Tutatumia localStorage kama mbadala.');
+                useFirebase = false;
+
+                // Onyesha banner ya hitilafu
+                const banner = document.getElementById('firebaseErrorBanner');
+                const text = document.getElementById('firebaseErrorText');
+                banner.style.display = 'flex';
+                text.textContent = 'Firebase: ' + err.message + '. Tumia localStorage.';
+            }
+
+            // --------------------------------------------------------------
+            // 2. DOM REFS
+            // --------------------------------------------------------------
+            const $ = (s) => document.querySelector(s);
+            const $$ = (s) => document.querySelectorAll(s);
+
+            const authWrapper = $('#authWrapper');
+            const dashboard = $('#dashboard');
+
+            const loginContainer = $('#loginFormContainer');
+            const signupContainer = $('#signupFormContainer');
+
+            const loginForm = $('#loginForm');
+            const signupForm = $('#signupForm');
+
+            const loginEmail = $('#loginEmail');
+            const loginPass = $('#loginPassword');
+            const loginError = $('#loginError');
+            const loginBtn = $('#loginBtn');
+            const rememberMe = $('#rememberMe');
+
+            const signupFullName = $('#signupFullName');
+            const signupUsername = $('#signupUsername');
+            const signupEmail = $('#signupEmail');
+            const signupPass = $('#signupPassword');
+            const signupConfirm = $('#signupConfirmPassword');
+            const signupError = $('#signupError');
+            const signupBtn = $('#signupBtn');
+            const termsCheck = $('#termsCheck');
+
+            const strengthFill = $('#strengthFill');
+            const strengthLabel = $('#strengthLabel');
+            const strengthScore = $('#strengthScore');
+
+            const avatarInput = $('#avatarInput');
+            const avatarPreview = $('#avatarPreview');
+
+            const switchToSignup = $('#switchToSignup');
+            const switchToLogin = $('#switchToLogin');
+            const forgotLink = $('#forgotPasswordLink');
+
+            const googleLoginBtn = $('#googleLoginBtn');
+            const googleSignupBtn = $('#googleSignupBtn');
+
+            const themeToggle = $('#themeToggle');
+            const themeIcon = $('#themeIcon');
+            const themeLabel = $('#themeLabel');
+
+            const logoutBtn = $('#logoutBtn');
+            const settingsToggle = $('#settingsToggle');
+            const notifToggle = $('#notifToggle');
+
+            const dashboardName = $('#dashboardName');
+            const dashboardEmail = $('#dashboardEmail');
+            const dashboardAvatar = $('#dashboardAvatar');
+            const profileFullName = $('#profileFullName');
+            const profileUsername = $('#profileUsername');
+            const profileEmail = $('#profileEmail');
+            const profileVerified = $('#profileVerified');
+
+            const settingsFullName = $('#settingsFullName');
+            const settingsUsername = $('#settingsUsername');
+            const updateProfileBtn = $('#updateProfileBtn');
+            const settingsFeedback = $('#settingsFeedback');
+            const settingsSection = $('#settingsSection');
+            const notifSection = $('#notifSection');
+
+            const toastContainer = $('#toastContainer');
+
+            let currentUser = null;
+            let userProfile = null;
+
+            // --------------------------------------------------------------
+            // 3. TOAST SYSTEM
+            // --------------------------------------------------------------
+            function showToast(message, type = 'info') {
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.classList.add('show'), 50);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 400);
+                }, 4000);
+            }
+
+            // --------------------------------------------------------------
+            // 4. THEME TOGGLE
+            // --------------------------------------------------------------
+            let darkMode = true;
+
+            function setTheme(mode) {
+                darkMode = mode;
+                document.body.classList.toggle('light-mode', !mode);
+                themeIcon.className = mode ? 'fas fa-moon' : 'fas fa-sun';
+                themeLabel.textContent = mode ? 'Dark' : 'Light';
+                localStorage.setItem('theme', mode ? 'dark' : 'light');
+            }
+
+            themeToggle.addEventListener('click', () => setTheme(!darkMode));
+
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') setTheme(false);
+            else setTheme(true);
+
+            // --------------------------------------------------------------
+            // 5. PASSWORD STRENGTH
+            // --------------------------------------------------------------
+            signupPass.addEventListener('input', () => {
+                const pass = signupPass.value;
+                let score = 0;
+                if (pass.length >= 6) score += 20;
+                if (pass.length >= 10) score += 20;
+                if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 20;
+                if (/\d/.test(pass)) score += 20;
+                if (/[^a-zA-Z0-9]/.test(pass)) score += 20;
+
+                strengthFill.style.width = score + '%';
+                strengthScore.textContent = score + '%';
+
+                let label = 'Dhaifu';
+                let color = '#ef4444';
+                if (score >= 80) { label = 'Nguvu';
+                    color = '#22c55e'; } else if (score >= 60) { label = 'Nzuri';
+                    color = '#fbbf24'; } else if (score >= 40) { label = 'Kawaida';
+                    color = '#f59e0b'; }
+                strengthLabel.textContent = 'Nguvu: ' + label;
+                strengthFill.style.background = color;
+            });
+
+            // --------------------------------------------------------------
+            // 6. SHOW/HIDE PASSWORD
+            // --------------------------------------------------------------
+            $$('.toggle-password').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const target = document.getElementById(btn.dataset.target);
+                    if (!target) return;
+                    const type = target.getAttribute('type') === 'password' ? 'text' : 'password';
+                    target.setAttribute('type', type);
+                    btn.querySelector('i').className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+                });
+            });
+
+            // --------------------------------------------------------------
+            // 7. AVATAR UPLOAD (base64 preview)
+            // --------------------------------------------------------------
+            let avatarBase64 = null;
+
+            $('#avatarUploadBtn').addEventListener('click', () => avatarInput.click());
+
+            avatarInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    avatarBase64 = ev.target.result;
+                    avatarPreview.innerHTML = `<img src="${avatarBase64}" style="width:100%;height:100%;object-fit:cover;" />`;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // --------------------------------------------------------------
+            // 8. SWITCH BETWEEN LOGIN & SIGNUP
+            // --------------------------------------------------------------
+            function showLogin() {
+                loginContainer.style.display = 'block';
+                signupContainer.style.display = 'none';
+                loginError.textContent = '';
+                signupError.textContent = '';
+            }
+
+            function showSignup() {
+                loginContainer.style.display = 'none';
+                signupContainer.style.display = 'block';
+                loginError.textContent = '';
+                signupError.textContent = '';
+            }
+
+            switchToSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSignup();
+            });
+
+            switchToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                showLogin();
+            });
+
+            // --------------------------------------------------------------
+            // 9. AUTH FUNCTIONS
+            // --------------------------------------------------------------
+            function setLoading(btn, loading) {
+                if (loading) {
+                    btn.classList.add('loading');
+                    btn.disabled = true;
+                } else {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            }
+
+            // --- Login ---
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = loginEmail.value.trim();
+                const pass = loginPass.value;
+                if (!email || !pass) {
+                    loginError.textContent = 'Tafadhali jaza barua pepe na nenosiri.';
+                    return;
+                }
+                loginError.textContent = '';
+                setLoading(loginBtn, true);
+
+                try {
+                    if (useFirebase && auth) {
+                        const cred = await auth.signInWithEmailAndPassword(email, pass);
+                        if (rememberMe.checked) {
+                            localStorage.setItem('rememberEmail', email);
+                        } else {
+                            localStorage.removeItem('rememberEmail');
+                        }
+                        showToast('Karibu tena!', 'success');
+                        loginForm.reset();
+                    } else {
+                        // Fallback: localStorage demo
+                        const users = JSON.parse(localStorage.getItem('premium_users') || '[]');
+                        const found = users.find(u => u.email === email && u.password === pass);
+                        if (!found) throw new Error('Barua pepe au nenosiri si sahihi.');
+                        const user = { email: found.email, uid: found.uid, displayName: found.fullName || '',
+                            username: found.username || '' };
+                        localStorage.setItem('premium_currentUser', JSON.stringify(user));
+                        handleUserLoggedIn(user);
+                        showToast('Karibu tena!', 'success');
+                        loginForm.reset();
+                    }
+                } catch (err) {
+                    loginError.textContent = err.message;
+                    showToast(err.message, 'error');
+                } finally {
+                    setLoading(loginBtn, false);
+                }
+            });
+
+            // --- Signup ---
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                signupError.textContent = '';
+
+                const fullName = signupFullName.value.trim();
+                const username = signupUsername.value.trim();
+                const email = signupEmail.value.trim();
+                const pass = signupPass.value;
+                const confirm = signupConfirm.value;
+
+                // Validations
+                if (!fullName || !username || !email || !pass || !confirm) {
+                    signupError.textContent = 'Tafadhali jaza sehemu zote.';
+                    return;
+                }
+                if (pass.length < 6) {
+                    signupError.textContent = 'Nenosiri lazima liwe na herufi 6 au zaidi.';
+                    return;
+                }
+                if (pass !== confirm) {
+                    signupError.textContent = 'Nenosiri na uthibitisho hazifanani.';
+                    return;
+                }
+                if (!termsCheck.checked) {
+                    signupError.textContent = 'Lazima ukubali masharti na sera.';
+                    return;
+                }
+                // Check username uniqueness (local)
+                if (!useFirebase) {
+                    const users = JSON.parse(localStorage.getItem('premium_users') || '[]');
+                    if (users.some(u => u.username === username)) {
+                        signupError.textContent = 'Jina la mtumiaji tayari limetumiwa.';
+                        return;
+                    }
+                } else {
+                    // Firestore check (simplified)
+                    try {
+                        const snapshot = await db.collection('users').where('username', '==', username).get();
+                        if (!snapshot.empty) {
+                            signupError.textContent = 'Jina la mtumiaji tayari limetumiwa.';
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn('Username check error:', err);
+                    }
+                }
+
+                signupError.textContent = '';
+                setLoading(signupBtn, true);
+
+                try {
+                    if (useFirebase && auth) {
+                        // Create user
+                        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                        const user = cred.user;
+                        await user.updateProfile({ displayName: fullName });
+
+                        // Save to Firestore
+                        const userData = {
+                            uid: user.uid,
+                            fullName: fullName,
+                            username: username,
+                            email: email,
+                            photoURL: avatarBase64 || null,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        await db.collection('users').doc(user.uid).set(userData);
+
+                        // Send email verification
+                        await user.sendEmailVerification();
+
+                        showToast('Akaunti imeundwa! Tafadhali thibitisha barua pepe yako.', 'success');
+                        signupForm.reset();
+                        avatarBase64 = null;
+                        avatarPreview.innerHTML = '<i class="fas fa-user"></i>';
+                    } else {
+                        // localStorage fallback
+                        const users = JSON.parse(localStorage.getItem('premium_users') || '[]');
+                        const newUser = {
+                            uid: 'user_' + Date.now(),
+                            fullName: fullName,
+                            username: username,
+                            email: email,
+                            password: pass,
+                            photoURL: avatarBase64 || null,
+                            createdAt: Date.now()
+                        };
+                        users.push(newUser);
+                        localStorage.setItem('premium_users', JSON.stringify(users));
+                        const userObj = { email: email, uid: newUser.uid, displayName: fullName, username: username };
+                        localStorage.setItem('premium_currentUser', JSON.stringify(userObj));
+                        handleUserLoggedIn(userObj);
+                        showToast('Akaunti imeundwa! Karibu.', 'success');
+                        signupForm.reset();
+                        avatarBase64 = null;
+                        avatarPreview.innerHTML = '<i class="fas fa-user"></i>';
+                    }
+                } catch (err) {
+                    signupError.textContent = err.message;
+                    showToast(err.message, 'error');
+                } finally {
+                    setLoading(signupBtn, false);
+                }
+            });
+
+            // --- Google Sign-In (both login & signup) ---
+            async function handleGoogleSignIn() {
+                if (!useFirebase || !auth) {
+                    showToast('Google Sign-In inahitaji Firebase.', 'warning');
+                    return;
+                }
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    const result = await auth.signInWithPopup(provider);
+                    const user = result.user;
+                    const doc = await db.collection('users').doc(user.uid).get();
+                    if (!doc.exists) {
+                        const username = user.email.split('@')[0] + '_' + Date.now().toString().slice(-4);
+                        await db.collection('users').doc(user.uid).set({
+                            uid: user.uid,
+                            fullName: user.displayName || '',
+                            username: username,
+                            email: user.email,
+                            photoURL: user.photoURL || null,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    showToast('Karibu! Umeingia kwa Google.', 'success');
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
+            }
+
+            googleLoginBtn.addEventListener('click', handleGoogleSignIn);
+            googleSignupBtn.addEventListener('click', handleGoogleSignIn);
+
+            // --- Forgot Password ---
+            forgotLink.addEventListener('click', async () => {
+                const email = loginEmail.value.trim();
+                if (!email) {
+                    showToast('Tafadhali weka barua pepe yako.', 'warning');
+                    return;
+                }
+                if (!useFirebase || !auth) {
+                    showToast('Tuma barua pepe ili kupata nenosiri jipya (demo).', 'info');
+                    return;
+                }
+                try {
+                    await auth.sendPasswordResetEmail(email);
+                    showToast('Barua pepe ya kuweka upya nenosiri imetumwa.', 'success');
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
+            });
+
+            // --------------------------------------------------------------
+            // 10. AUTH STATE HANDLER (Firebase + localStorage)
+            // --------------------------------------------------------------
+            function handleUserLoggedIn(user) {
+                currentUser = user;
+                authWrapper.classList.add('hide');
+                dashboard.classList.add('active');
+                // Fill dashboard
+                dashboardName.textContent = user.displayName || user.email || 'Mtumiaji';
+                dashboardEmail.textContent = user.email || '';
+                profileEmail.textContent = user.email || '';
+                if (user.photoURL) {
+                    dashboardAvatar.innerHTML = `<img src="${user.photoURL}" />`;
+                } else {
+                    const initial = (user.displayName || user.email || 'U')[0].toUpperCase();
+                    dashboardAvatar.innerHTML = `<span style="font-size:1.8rem;">${initial}</span>`;
+                }
+                // Load full profile from Firestore or localStorage
+                loadUserProfile(user.uid);
+                // Update settings fields
+                settingsFullName.value = user.displayName || '';
+                // Show notifications
+                showToast('Karibu kwenye dashibodi!', 'success');
+            }
+
+            function handleUserLoggedOut() {
+                currentUser = null;
+                authWrapper.classList.remove('hide');
+                dashboard.classList.remove('active');
+                loginForm.reset();
+                signupForm.reset();
+                loginError.textContent = '';
+                signupError.textContent = '';
+                showLogin();
+                if (useFirebase && auth) {
+                    auth.signOut();
+                }
+                localStorage.removeItem('premium_currentUser');
+            }
+
+            async function loadUserProfile(uid) {
+                if (useFirebase && db) {
+                    try {
+                        const doc = await db.collection('users').doc(uid).get();
+                        if (doc.exists) {
+                            const data = doc.data();
+                            userProfile = data;
+                            profileFullName.textContent = data.fullName || '-';
+                            profileUsername.textContent = data.username || '-';
+                            profileVerified.textContent = auth.currentUser?.emailVerified ? 'Ndiyo' : 'Hapana';
+                            settingsFullName.value = data.fullName || '';
+                            settingsUsername.value = data.username || '';
+                            dashboardName.textContent = data.fullName || currentUser.email || 'Mtumiaji';
+                            if (data.photoURL) {
+                                dashboardAvatar.innerHTML = `<img src="${data.photoURL}" />`;
+                            } else if (currentUser.photoURL) {
+                                dashboardAvatar.innerHTML = `<img src="${currentUser.photoURL}" />`;
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Load profile error:', err);
+                    }
+                } else {
+                    // localStorage
+                    const users = JSON.parse(localStorage.getItem('premium_users') || '[]');
+                    const found = users.find(u => u.uid === uid);
+                    if (found) {
+                        userProfile = found;
+                        profileFullName.textContent = found.fullName || '-';
+                        profileUsername.textContent = found.username || '-';
+                        profileVerified.textContent = 'Hapana';
+                        settingsFullName.value = found.fullName || '';
+                        settingsUsername.value = found.username || '';
+                        dashboardName.textContent = found.fullName || currentUser.email || 'Mtumiaji';
+                        if (found.photoURL) {
+                            dashboardAvatar.innerHTML = `<img src="${found.photoURL}" />`;
+                        }
+                    }
+                }
+            }
+
+            // --- Update Profile ---
+            updateProfileBtn.addEventListener('click', async () => {
+                if (!currentUser) return;
+                const fullName = settingsFullName.value.trim();
+                const username = settingsUsername.value.trim();
+                if (!fullName || !username) {
+                    settingsFeedback.textContent = 'Tafadhali jaza sehemu zote.';
+                    settingsFeedback.style.color = '#f87171';
+                    return;
+                }
+                settingsFeedback.textContent = 'Inasasisha...';
+                settingsFeedback.style.color = '#fbbf24';
+
+                try {
+                    if (useFirebase && db) {
+                        await db.collection('users').doc(currentUser.uid).update({
+                            fullName: fullName,
+                            username: username
+                        });
+                        if (auth.currentUser) {
+                            await auth.currentUser.updateProfile({ displayName: fullName });
+                        }
+                        settingsFeedback.textContent = '✅ Mipangilio imesasishwa!';
+                        settingsFeedback.style.color = '#22c55e';
+                        showToast('Mipangilio imesasishwa!', 'success');
+                        loadUserProfile(currentUser.uid);
+                    } else {
+                        const users = JSON.parse(localStorage.getItem('premium_users') || '[]');
+                        const found = users.find(u => u.uid === currentUser.uid);
+                        if (found) {
+                            found.fullName = fullName;
+                            found.username = username;
+                            localStorage.setItem('premium_users', JSON.stringify(users));
+                            settingsFeedback.textContent = '✅ Mipangilio imesasishwa!';
+                            settingsFeedback.style.color = '#22c55e';
+                            showToast('Mipangilio imesasishwa!', 'success');
+                            loadUserProfile(currentUser.uid);
+                            dashboardName.textContent = fullName;
+                        }
+                    }
+                } catch (err) {
+                    settingsFeedback.textContent = '❌ ' + err.message;
+                    settingsFeedback.style.color = '#f87171';
+                    showToast(err.message, 'error');
+                }
+            });
+
+            // --- Toggle settings and notifications ---
+            settingsToggle.addEventListener('click', () => {
+                settingsSection.classList.toggle('show');
+                if (settingsSection.classList.contains('show')) {
+                    settingsToggle.style.background = 'rgba(79,110,247,0.2)';
+                } else {
+                    settingsToggle.style.background = '';
+                }
+            });
+
+            notifToggle.addEventListener('click', () => {
+                notifSection.classList.toggle('show');
+                if (notifSection.classList.contains('show')) {
+                    notifToggle.style.background = 'rgba(251,191,36,0.2)';
+                } else {
+                    notifToggle.style.background = '';
+                }
+            });
+
+            // --- Logout ---
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Je, una uhakika unataka kutoka?')) {
+                    handleUserLoggedOut();
+                    showToast('Umefanikiwa kutoka.', 'info');
+                }
+            });
+
+            // --------------------------------------------------------------
+            // 11. INIT & AUTH LISTENER
+            // --------------------------------------------------------------
+            // Check for existing session
+            if (useFirebase && auth) {
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        const userObj = {
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            photoURL: user.photoURL
+                        };
+                        handleUserLoggedIn(userObj);
+                        loadUserProfile(user.uid);
+                    } else {
+                        const stored = localStorage.getItem('premium_currentUser');
+                        if (stored) {
+                            try {
+                                const u = JSON.parse(stored);
+                                handleUserLoggedIn(u);
+                                loadUserProfile(u.uid);
+                            } catch {
+                                handleUserLoggedOut();
+                            }
+                        } else {
+                            handleUserLoggedOut();
+                        }
+                    }
+                });
+            } else {
+                // localStorage only
+                const stored = localStorage.getItem('premium_currentUser');
+                if (stored) {
+                    try {
+                        const u = JSON.parse(stored);
+                        handleUserLoggedIn(u);
+                        loadUserProfile(u.uid);
+                    } catch {
+                        handleUserLoggedOut();
+                    }
+                } else {
+                    handleUserLoggedOut();
+                }
+            }
+
+            // Remember email
+            const remembered = localStorage.getItem('rememberEmail');
+            if (remembered) {
+                loginEmail.value = remembered;
+                rememberMe.checked = true;
+            }
+
+            // Initial state: show login
+            showLogin();
+
+            console.log('✅ Premium Login & Sign Up System imeanzishwa!');
+            if (useFirebase) {
+                console.log('🔐 Inatumia Firebase Authentication & Firestore.');
+            } else {
+                console.log('🔐 Inatumia localStorage kama mbadala (hakuna Firebase).');
+            }
+
+        })();
+    </script>
+</body>
+  </html>
