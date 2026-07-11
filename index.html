@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Free Odd & Free Mikeka</title>
+
+    <!-- Firebase SDKs (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js">
+    </script>
+
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ----- RESET & BASE ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #0b0e1a;
+            color: #f0f4ff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ----- SCROLLBAR ----- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141b2b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 10px;
+        }
+
+        /* ----- NAVIGATION (Premium) ----- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 40px;
+            background: rgba(11, 14, 26, 0.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-brand i {
+            -webkit-text-fill-color: #fbbf24;
+            font-size: 1.6rem;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .nav-links a,
+        .nav-links button {
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            background: transparent;
+            color: #a8b5d9;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        .nav-links a:hover,
+        .nav-links button:hover {
+            background: rgba(251, 191, 36, 0.1);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .nav-links a.active {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.05);
+        }
+        .nav-links a .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 2px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        .btn-outline-gold {
+            border: 1.5px solid rgba(251, 191, 36, 0.4) !important;
+            color: #fbbf24 !important;
+        }
+        .btn-outline-gold:hover {
+            background: #fbbf24 !important;
+            color: #0b0e1a !important;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+            color: #0b0e1a !important;
+            font-weight: 700 !important;
+        }
+        .btn-gold:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(251, 191, 36, 0.35);
+        }
+
+        /* ----- PAGE CONTAINERS ----- */
+        .page {
+            display: none;
+            padding: 30px 40px 60px;
+            max-width: 1300px;
+            margin: 0 auto;
+            animation: fadeUp 0.5s ease;
+        }
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ----- RAIN CANVAS (login bg) ----- */
+        #rainCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            display: none;
+        }
+        #rainCanvas.active {
+            display: block;
+        }
+
+        /* ----- LOGIN PAGE (BIG & PREMIUM) ----- */
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 85vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(11, 14, 26, 0.82);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(251, 191, 36, 0.15);
+            border-radius: 40px;
+            padding: 56px 48px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 60px rgba(251, 191, 36, 0.03);
+            transition: transform 0.3s ease;
+        }
+        .auth-card:hover {
+            transform: translateY(-6px);
+        }
+        .auth-card .logo-icon {
+            font-size: 4rem;
+            text-align: center;
+            color: #fbbf24;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .auth-card h2 {
+            font-size: 2.6rem;
+            text-align: center;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        .auth-card .sub {
+            text-align: center;
+            color: #8896b8;
+            margin-bottom: 32px;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .auth-card label {
+            display: block;
+            font-weight: 600;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            color: #d0d9f0;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+        .auth-card .input-group {
+            position: relative;
+        }
+        .auth-card .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4a5a7a;
+            font-size: 1.1rem;
+        }
+        .auth-card .input-group input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border-radius: 18px;
+            border: 1.5px solid rgba(251, 191, 36, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1rem;
+            transition: 0.3s;
+            outline: none;
+        }
+        .auth-card .input-group input:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.08);
+        }
+        .auth-card .input-group input::placeholder {
+            color: #4a5a7a;
+        }
+
+        .auth-card .btn-submit {
+            width: 100%;
+            padding: 16px;
+            margin-top: 24px;
+            border: none;
+            border-radius: 40px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0b0e1a;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            letter-spacing: 0.5px;
+        }
+        .auth-card .btn-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px rgba(251, 191, 36, 0.3);
+        }
+
+        .auth-card .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: #4a5a7a;
+            font-size: 0.85rem;
+        }
+        .auth-card .divider::before,
+        .auth-card .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .auth-card .btn-google {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .auth-card .btn-google:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: scale(1.01);
+        }
+        .auth-card .btn-google i {
+            color: #ea4335;
+            font-size: 1.2rem;
+        }
+
+        .auth-card .switch-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #8896b8;
+            font-size: 0.95rem;
+        }
+        .auth-card .switch-link a {
+            color: #fbbf24;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .auth-card .switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-card .error-msg {
+            color: #f87171;
+            font-size: 0.9rem;
+            margin-top: 12px;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* ----- HOME (PUBLIC MIKAKA) ----- */
+        .hero {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        .hero h1 i {
+            -webkit-text-fill-color: #fbbf24;
+            margin-right: 8px;
+        }
+        .hero p {
+            color: #8896b8;
+            font-size: 1.2rem;
+            margin-top: 6px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .online-counter {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 60px;
+            padding: 8px 22px;
+            font-size: 0.9rem;
+            color: #22c55e;
+            margin: 12px auto 0;
+            backdrop-filter: blur(4px);
+        }
+        .online-counter .dot {
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .mikeka-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 28px;
+            margin-top: 32px;
+        }
+
+        .mikeka-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(251, 191, 36, 0.08);
+            border-radius: 24px;
+            padding: 24px 22px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(4px);
+            overflow: hidden;
+            position: relative;
+        }
+        .mikeka-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+            opacity: 0;
+            transition: 0.4s;
+        }
+        .mikeka-card:hover::before {
+            opacity: 1;
+        }
+        .mikeka-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(251, 191, 36, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .mikeka-card .card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            background: #141b2b;
+        }
+        .mikeka-card .code {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fbbf24;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mikeka-card .code .copy-btn {
+            background: rgba(251, 191, 36, 0.1);
+            border: none;
+            color: #fbbf24;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+        .mikeka-card .code .copy-btn:hover {
+            background: rgba(251, 191, 36, 0.2);
+            transform: scale(1.05);
+        }
+        .mikeka-card .desc {
+            color: #c8d4ed;
+            margin-top: 8px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .mikeka-card .meta {
+            color: #4a5a7a;
+            font-size: 0.8rem;
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #4a5a7a;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* ----- ADMIN PANEL ----- */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .admin-header h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .admin-password-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(251, 191, 36, 0.15);
+            border-radius: 24px;
+            padding: 40px 32px;
+            max-width: 480px;
+            margin: 40px auto;
+            text-align: center;
+        }
+        .admin-password-box input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            border: 1.5px solid rgba(251, 191, 36, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .admin-password-box input:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.08);
+        }
+        .admin-password-box .btn-unlock {
+            margin-top: 18px;
+            padding: 14px 48px;
+            border: none;
+            border-radius: 40px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0b0e1a;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .admin-password-box .btn-unlock:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(251, 191, 36, 0.3);
+        }
+        .admin-password-box .error {
+            color: #f87171;
+            margin-top: 12px;
+            min-height: 24px;
+        }
+
+        .admin-content {
+            display: none;
+        }
+        .admin-content.show {
+            display: block;
+        }
+
+        .form-mikeka {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(251, 191, 36, 0.08);
+            border-radius: 24px;
+            padding: 32px 34px;
+            margin-bottom: 32px;
+        }
+        .form-mikeka .row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .form-mikeka .row input,
+        .form-mikeka .row textarea {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1.5px solid rgba(251, 191, 36, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .form-mikeka .row input:focus,
+        .form-mikeka .row textarea:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.06);
+        }
+        .form-mikeka .row textarea {
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+        }
+        .form-mikeka .row .file-input-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+        }
+        .form-mikeka .row .file-input-wrap input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .form-mikeka .row .file-input-wrap .file-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1.5px dashed rgba(251, 191, 36, 0.15);
+            background: rgba(255, 255, 255, 0.03);
+            color: #8896b8;
+            font-size: 0.9rem;
+            transition: 0.3s;
+            height: 100%;
+            cursor: pointer;
+        }
+        .form-mikeka .row .file-input-wrap .file-label:hover {
+            border-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.04);
+        }
+        .form-mikeka .row .file-input-wrap .file-label i {
+            color: #fbbf24;
+            font-size: 1.2rem;
+        }
+        .form-mikeka .row button {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 40px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0b0e1a;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            white-space: nowrap;
+            font-size: 0.95rem;
+        }
+        .form-mikeka .row button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 30px rgba(251, 191, 36, 0.25);
+        }
+        #formFeedback {
+            margin-top: 12px;
+            min-height: 24px;
+            font-size: 0.9rem;
+        }
+
+        .admin-mikeka-list .item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            transition: 0.2s;
+        }
+        .admin-mikeka-list .item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .admin-mikeka-list .item .info .code {
+            font-weight: 700;
+            color: #fbbf24;
+            font-family: 'Courier New', monospace;
+        }
+        .admin-mikeka-list .item .info .desc {
+            color: #c8d4ed;
+            font-size: 0.9rem;
+        }
+        .admin-mikeka-list .item .info .preview-img {
+            max-width: 60px;
+            max-height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-top: 6px;
+        }
+        .admin-mikeka-list .item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .admin-mikeka-list .item .actions button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .admin-mikeka-list .item .actions .edit {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+        .admin-mikeka-list .item .actions .edit:hover {
+            background: rgba(251, 191, 36, 0.25);
+        }
+        .admin-mikeka-list .item .actions .del {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        .admin-mikeka-list .item .actions .del:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        /* ----- ABOUT PAGE ----- */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 24px;
+        }
+        .about-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(251, 191, 36, 0.06);
+            border-radius: 24px;
+            padding: 28px 30px;
+            transition: 0.3s;
+        }
+        .about-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(251, 191, 36, 0.12);
+            transform: translateY(-4px);
+        }
+        .about-card i {
+            font-size: 2.4rem;
+            color: #fbbf24;
+            margin-bottom: 12px;
+        }
+        .about-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #f0f4ff;
+        }
+        .about-card p {
+            color: #8896b8;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+        .about-card ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+        .about-card ul li {
+            color: #c8d4ed;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+        .about-card ul li i {
+            font-size: 1rem;
+            color: #fbbf24;
+            margin: 0;
+        }
+        @media (max-width: 768px) {
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ----- NOTIFICATION TOAST ----- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1a2236;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-radius: 20px;
+            padding: 18px 26px;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            transform: translateY(90px);
+            opacity: 0;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 400px;
+            backdrop-filter: blur(12px);
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .toast.success {
+            border-color: #22c55e;
+        }
+        .toast.error {
+            border-color: #ef4444;
+        }
+        .toast.warning {
+            border-color: #fbbf24;
+        }
+        .toast .toast-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .toast .toast-body {
+            color: #8896b8;
+            font-size: 0.9rem;
+            margin-top: 2px;
+        }
+
+        /* ----- SHARE OVERLAY ----- */
+        .share-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .share-overlay.show {
+            display: flex;
+        }
+        .share-modal {
+            background: #1a2236;
+            border: 1px solid rgba(251, 191, 36, 0.15);
+            border-radius: 32px;
+            padding: 44px 38px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            animation: fadeUp 0.4s ease;
+        }
+        .share-modal h2 {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+            color: #fbbf24;
+        }
+        .share-modal p {
+            color: #8896b8;
+            margin-bottom: 20px;
+        }
+        .share-modal .share-progress {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .share-modal .share-progress .dot {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #4a5a7a;
+            transition: 0.3s;
+        }
+        .share-modal .share-progress .dot.filled {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: #fbbf24;
+            color: #fbbf24;
+        }
+        .share-modal .share-progress .dot.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.15);
+        }
+        .share-modal .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 34px;
+            border: none;
+            border-radius: 40px;
+            background: linear-gradient(135deg, #1da1f2, #0d8bd9);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 6px 4px;
+        }
+        .share-modal .share-btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(29, 161, 242, 0.3);
+        }
+        .share-modal .share-btn.whatsapp {
+            background: linear-gradient(135deg, #25d366, #128c7e);
+        }
+        .share-modal .share-btn.whatsapp:hover {
+            box-shadow: 0 8px 30px rgba(37, 211, 102, 0.3);
+        }
+        .share-modal .close-share {
+            margin-top: 16px;
+            background: transparent;
+            border: none;
+            color: #4a5a7a;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .share-modal .close-share:hover {
+            color: #fff;
+        }
+
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 768px) {
+            nav {
+                padding: 12px 18px;
+            }
+            .nav-brand {
+                font-size: 1.2rem;
+            }
+            .nav-links a,
+            .nav-links button {
+                padding: 6px 12px;
+                font-size: 0.78rem;
+            }
+            .page {
+                padding: 16px 16px 40px;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .auth-card {
+                padding: 32px 24px;
+            }
+            .auth-card h2 {
+                font-size: 2rem;
+            }
+            .form-mikeka .row {
+                flex-direction: column;
+            }
+            .form-mikeka .row button {
+                width: 100%;
+            }
+            .admin-mikeka-list .item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .admin-mikeka-list .item .actions {
+                justify-content: flex-end;
+            }
+            .share-modal {
+                padding: 28px 20px;
+            }
+            .mikeka-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .nav-links {
+                justify-content: center;
+            }
+            .nav-links a,
+            .nav-links button {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+            .auth-card {
+                padding: 24px 16px;
+            }
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Hide nav items when logged out */
+        .nav-link-protected {
+            display: none;
+        }
+        .nav-link-auth {
+            display: inline-flex;
+        }
+        body.logged-in .nav-link-protected {
+            display: inline-flex;
+        }
+        body.logged-in .nav-link-auth {
+            display: none;
+        }
+        .nav-link-admin {
+            display: none;
+        }
+        body.logged-in .nav-link-admin {
+            display: inline-flex;
+        }
+
+        /* Upload preview */
+        .image-preview {
+            margin-top: 12px;
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 16px;
+            border: 1px solid rgba(251, 191, 36, 0.1);
+            display: none;
+        }
+        .image-preview.show {
+            display: block;
+        }
+
+        /* Notification bell */
+        .notif-bell {
+            position: relative;
+        }
+        .notif-bell .badge-count {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            background: #ef4444;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TOAST ===== -->
+    <div id="toast" class="toast">
+        <div class="toast-title" id="toastTitle">Arifa</div>
+        <div class="toast-body" id="toastBody">Maudhui</div>
+    </div>
+
+    <!-- ===== RAIN CANVAS ===== -->
+    <canvas id="rainCanvas"></canvas>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav>
+        <div class="nav-brand">
+            <i class="fas fa-bolt"></i> Free Odd &amp; Mikeka
+        </div>
+        <div class="nav-links">
+            <a href="#" class="nav-link-protected active" data-page="home"><i class="fas fa-home"></i> Nyumbani</a>
+            <a href="#" class="nav-link-protected nav-link-admin" data-page="admin"><i class="fas fa-shield-alt"></i> Admin</a>
+            <a href="#" class="nav-link-protected" data-page="about"><i class="fas fa-info-circle"></i> Kuhusu</a>
+            <a href="#" class="nav-link-auth" data-page="login"><i class="fas fa-sign-in-alt"></i> Ingia</a>
+            <a href="#" class="nav-link-auth" data-page="signup"><i class="fas fa-user-plus"></i> Jisajili</a>
+            <button id="navLogout" style="display:none;" class="btn-outline-gold"><i class="fas fa-sign-out-alt"></i> Toka</button>
+        </div>
+    </nav>
+
+    <!-- ===== PAGE: HOME ===== -->
+    <section id="page-home" class="page active">
+        <div class="hero">
+            <h1><i class="fas fa-bolt"></i> Mikeka &amp; Odd za Bure</h1>
+            <p>Pata mikeka na odd za kipekee zilizowekwa na admin wetu. Nakili na utumie!</p>
+            <div class="online-counter" id="onlineCounter">
+                <span class="dot"></span>
+                <span id="onlineCount">0</span> wateja wako online sasa
+            </div>
+        </div>
+        <div id="publicMikekaList" class="mikeka-grid">
+            <!-- rendered by JS -->
+        </div>
+    </section>
+
+    <!-- ===== PAGE: LOGIN ===== -->
+    <section id="page-login" class="page">
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <span class="logo-icon"><i class="fas fa-bolt"></i></span>
+                <h2>Karibu Sana</h2>
+                <p class="sub">Ingia kwenye akaunti yako ya Free Odd &amp; Mikeka</p>
+                <form id="loginForm">
+                    <label>Barua pepe</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="mfano@email.com" required />
+                    </div>
+                    <label>Nenosiri</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required />
+                    </div>
+                    <div class="error-msg" id="loginError"></div>
+                    <button type="submit" class="btn-submit"><i class="fas fa-arrow-right"></i> Ingia</button>
+                </form>
+                <div class="divider">au</div>
+                <button class="btn-google" id="googleLoginBtn"><i class="fab fa-google"></i> Ingia kwa Google</button>
+                <div class="switch-link">
+                    Huna akaunti? <a id="switchToSignup">Jisajili</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PAGE: SIGNUP ===== -->
+    <section id="page-signup" class="page">
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <span class="logo-icon"><i class="fas fa-user-plus"></i></span>
+                <h2>Jisajili</h2>
+                <p class="sub">Unda akaunti yako bure sasa hivi</p>
+                <form id="signupForm">
+                    <label>Barua pepe</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="signupEmail" placeholder="mfano@email.com" required />
+                    </div>
+                    <label>Nenosiri</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="signupPassword" placeholder="Angalau herufi 6" required />
+                    </div>
+                    <div class="error-msg" id="signupError"></div>
+                    <button type="submit" class="btn-submit"><i class="fas fa-user-plus"></i> Jisajili</button>
+                </form>
+                <div class="divider">au</div>
+                <button class="btn-google" id="googleSignupBtn"><i class="fab fa-google"></i> Jisajili kwa Google</button>
+                <div class="switch-link">
+                    Tuna akaunti? <a id="switchToLogin">Ingia</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PAGE: ADMIN ===== -->
+    <section id="page-admin" class="page">
+        <div class="admin-header">
+            <h2><i class="fas fa-shield-alt" style="-webkit-text-fill-color:#fbbf24;"></i> Dhibiti Mikeka</h2>
+            <span style="color:#4a5a7a;font-size:0.9rem;"><i class="fas fa-key"></i> Nenosiri: <strong style="color:#fbbf24;">dvary5050</strong></span>
+        </div>
+
+        <div id="adminPasswordBox" class="admin-password-box">
+            <p style="color:#8896b8;margin-bottom:12px;">Weka nenosiri la admin ili kuendelea</p>
+            <input type="password" id="adminPasswordInput" placeholder="Weka nenosiri hapa" />
+            <button class="btn-unlock" id="adminUnlockBtn"><i class="fas fa-unlock"></i> Fungua</button>
+            <div class="error" id="adminPassError"></div>
+        </div>
+
+        <div id="adminContent" class="admin-content">
+            <div class="form-mikeka">
+                <h3 style="margin-bottom:16px;color:#c8d4ed;"><i class="fas fa-plus-circle" style="color:#fbbf24;"></i> Ongeza Mikeka Mpya</h3>
+                <form id="mikekaForm">
+                    <div class="row">
+                        <input type="text" id="mikekaCode" placeholder="Msimbo / Code *" required />
+                        <textarea id="mikekaDesc" placeholder="Maelezo (hiari)"></textarea>
+                    </div>
+                    <div class="row" style="margin-top:14px;">
+                        <div class="file-input-wrap">
+                            <input type="file" id="mikekaImage" accept="image/*" />
+                            <div class="file-label"><i class="fas fa-image"></i> <span id="fileName">Chagua picha (hiari)</span></div>
+                        </div>
+                        <button type="submit"><i class="fas fa-save"></i> Hifadhi</button>
+                    </div>
+                    <img id="imagePreview" class="image-preview" alt="Picha" />
+                </form>
+                <div id="formFeedback"></div>
+            </div>
+
+            <h3 style="color:#c8d4ed;margin-bottom:16px;"><i class="fas fa-list" style="color:#fbbf24;"></i> Mikeka Zilizopo</h3>
+            <div id="adminMikekaList" class="admin-mikeka-list"></div>
+        </div>
+    </section>
+
+    <!-- ===== PAGE: ABOUT ===== -->
+    <section id="page-about" class="page">
+        <div class="hero">
+            <h1><i class="fas fa-info-circle" style="-webkit-text-fill-color:#fbbf24;"></i> Kuhusu Sisi</h1>
+            <p>Jifunze zaidi kuhusu Free Odd &amp; Mikeka na jinsi tunavyokusaidia.</p>
+        </div>
+        <div class="about-grid">
+            <div class="about-card">
+                <i class="fas fa-bolt"></i>
+                <h3>Free Odd &amp; Mikeka</h3>
+                <p>Hapa unapata odd na mikeka za kipekee bure kabisa. Zinatumiwa na wateja wetu kwa ajili ya michezo, promo, na mambo mengine ya kujifurahisha.</p>
+            </div>
+            <div class="about-card">
+                <i class="fas fa-users"></i>
+                <h3>Jamii Yetu</h3>
+                <p>Tuna jamii inayokua ya wateja wanaoshiriki mikeka na kusaidiana. Kila siku tunaongeza mikeka mpya na odd za kuvutia.</p>
+            </div>
+            <div class="about-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Usalama</h3>
+                <p>Tunatumia teknolojia ya kisasa kuhakikisha data yako iko salama. Akaunti zako zinalindwa na nenosiri na uthibitishaji wa Google.</p>
+            </div>
+            <div class="about-card">
+                <i class="fas fa-gem"></i>
+                <h3>Vipengele</h3>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Mikeka za bure kila siku</li>
+                    <li><i class="fas fa-check-circle"></i> Nakili mikeka kwa bofyo</li>
+                    <li><i class="fas fa-check-circle"></i> Ongeza picha na maelezo</li>
+                    <li><i class="fas fa-check-circle"></i> Wateja online wanaonekana</li>
+                    <li><i class="fas fa-check-circle"></i> Arifa za mikeka mpya</li>
+                    <li><i class="fas fa-check-circle"></i> Ingia kwa Google</li>
+                </ul>
+            </div>
+            <div class="about-card" style="grid-column: 1 / -1;">
+                <i class="fas fa-star"></i>
+                <h3>Wateja Wetu Wanasema</h3>
+                <p style="font-style:italic;color:#c8d4ed;">"Free Odd &amp; Mikeka imenisaidia sana kupata mikeka za kipekee. Napenda jinsi inavyorahisi kutumia!" — <strong style="color:#fbbf24;">Juma K.</strong></p>
+                <p style="font-style:italic;color:#c8d4ed;margin-top:8px;">"Mfumo mzuri, unanipa arifa kila kitu kipya kinapowekwa. Asante sana!" — <strong style="color:#fbbf24;">Aisha M.</strong></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SHARE OVERLAY ===== -->
+    <div id="shareOverlay" class="share-overlay">
+        <div class="share-modal">
+            <h2><i class="fas fa-share-alt" style="color:#1da1f2;"></i> Shiriki ili Upate Ufikiaji</h2>
+            <p>Shiriki kiungo hiki na <strong>watu 5</strong> ili ufungue ufikiaji wa sehemu ya admin.</p>
+            <div class="share-progress" id="shareProgress"></div>
+            <p style="font-size:0.9rem;color:#4a5a7a;" id="shareCountText">Umewashirikisha: 0 / 5</p>
+            <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0;">
+                <button class="share-btn" id="shareTwitter"><i class="fab fa-twitter"></i> Twitter</button>
+                <button class="share-btn whatsapp" id="shareWhatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button class="share-btn" id="shareCopy" style="background:linear-gradient(135deg,#6b7280,#4b5563);"><i class="fas fa-copy"></i> Nakili</button>
+            </div>
+            <button class="close-share" id="closeShare"><i class="fas fa-times"></i> Funga</button>
+            <div id="shareStatus" style="color:#fbbf24;margin-top:8px;min-height:20px;font-size:0.9rem;"></div>
+        </div>
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // --------------------------------------------------------------
+            // 1. FIREBASE CONFIG — BADILI NA YAKO KUTOKA FIREBASE CONSOLE
+            // --------------------------------------------------------------
+            const firebaseConfig = {
+                apiKey: "AIzaSyDemoPlaceholderReplaceMe",
+                authDomain: "hospitallink-c2bf5.firebaseapp.com",
+                projectId: "hospitallink-c2bf5",
+                storageBucket: "hospitallink-c2bf5.firebasestorage.app",
+                messagingSenderId: "123456789012",
+                appId: "1:123456789012:web:abcdef123456"
+            };
+
+            let useFirebase = false;
+            let db = null;
+            let auth = null;
+            let storage = null;
+
+            try {
+                if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    auth = firebase.auth();
+                    storage = firebase.storage();
+                    useFirebase = true;
+                    console.log('✅ Firebase imeunganishwa.');
+                } else {
+                    console.warn('⚠️ Firebase SDK haipatikani, tutatumia localStorage.');
+                }
+            } catch (err) {
+                console.warn('⚠️ Hitilafu ya Firebase:', err.message);
+                useFirebase = false;
+            }
+
+            // --------------------------------------------------------------
+            // 2. DOM REFS
+            // --------------------------------------------------------------
+            const $ = (s) => document.querySelector(s);
+            const $$ = (s) => document.querySelectorAll(s);
+
+            const pages = {
+                home: $('#page-home'),
+                login: $('#page-login'),
+                signup: $('#page-signup'),
+                admin: $('#page-admin'),
+                about: $('#page-about')
+            };
+            const navLinks = $$('.nav-links a[data-page]');
+            const navLogout = $('#navLogout');
+
+            const loginForm = $('#loginForm');
+            const signupForm = $('#signupForm');
+            const loginEmail = $('#loginEmail');
+            const loginPass = $('#loginPassword');
+            const signupEmail = $('#signupEmail');
+            const signupPass = $('#signupPassword');
+            const loginError = $('#loginError');
+            const signupError = $('#signupError');
+            const googleLoginBtn = $('#googleLoginBtn');
+            const googleSignupBtn = $('#googleSignupBtn');
+
+            const adminPassBox = $('#adminPasswordBox');
+            const adminContent = $('#adminContent');
+            const adminPassInput = $('#adminPasswordInput');
+            const adminUnlockBtn = $('#adminUnlockBtn');
+            const adminPassError = $('#adminPassError');
+
+            const mikekaForm = $('#mikekaForm');
+            const mikekaCode = $('#mikekaCode');
+            const mikekaDesc = $('#mikekaDesc');
+            const mikekaImage = $('#mikekaImage');
+            const imagePreview = $('#imagePreview');
+            const fileName = $('#fileName');
+            const formFeedback = $('#formFeedback');
+
+            const publicList = $('#publicMikekaList');
+            const adminList = $('#adminMikekaList');
+            const onlineCount = $('#onlineCount');
+
+            const shareOverlay = $('#shareOverlay');
+            const shareProgress = $('#shareProgress');
+            const shareCountText = $('#shareCountText');
+            const shareStatus = $('#shareStatus');
+            const closeShare = $('#closeShare');
+            const shareTwitter = $('#shareTwitter');
+            const shareWhatsapp = $('#shareWhatsapp');
+            const shareCopy = $('#shareCopy');
+
+            const toast = $('#toast');
+            const toastTitle = $('#toastTitle');
+            const toastBody = $('#toastBody');
+
+            const ADMIN_PASSWORD = 'dvary5050';
+            const SHARE_TARGET = 5;
+
+            let currentUser = null;
+            let shareCount = 0;
+            let isAdminUnlocked = false;
+            let editingDocId = null;
+            let editingImageUrl = null;
+            let uploadFile = null;
+            let mikekaData = [];
+            let notifListener = null;
+            let onlineListener = null;
+
+            // --------------------------------------------------------------
+            // 3. RAIN EFFECT
+            // --------------------------------------------------------------
+            const canvas = $('#rainCanvas');
+            const ctx = canvas.getContext('2d');
+            let rainDrops = [];
+            let rainActive = false;
+            let rainAnimId = null;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            function initRain(count = 200) {
+                rainDrops = [];
+                for (let i = 0; i < count; i++) {
+                    rainDrops.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height - canvas.height,
+                        len: 10 + Math.random() * 28,
+                        speed: 5 + Math.random() * 14,
+                        opacity: 0.25 + Math.random() * 0.45,
+                        width: 1 + Math.random() * 2
+                    });
+                }
+            }
+
+            function drawRain() {
+                if (!rainActive) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (const d of rainDrops) {
+                    ctx.beginPath();
+                    ctx.moveTo(d.x, d.y);
+                    ctx.lineTo(d.x - 2, d.y + d.len);
+                    ctx.strokeStyle = `rgba(200, 220, 255, ${d.opacity * 0.4})`;
+                    ctx.lineWidth = d.width;
+                    ctx.shadowColor = 'rgba(251, 191, 36, 0.05)';
+                    ctx.shadowBlur = 6;
+                    ctx.stroke();
+                    d.y += d.speed;
+                    if (d.y > canvas.height + 40) {
+                        d.y = -20 - Math.random() * 50;
+                        d.x = Math.random() * canvas.width;
+                        d.speed = 5 + Math.random() * 14;
+                    }
+                }
+                rainAnimId = requestAnimationFrame(drawRain);
+            }
+
+            function startRain() {
+                if (rainActive) return;
+                rainActive = true;
+                canvas.classList.add('active');
+                initRain(220);
+                if (rainAnimId) cancelAnimationFrame(rainAnimId);
+                drawRain();
+            }
+
+            function stopRain() {
+                rainActive = false;
+                canvas.classList.remove('active');
+                if (rainAnimId) {
+                    cancelAnimationFrame(rainAnimId);
+                    rainAnimId = null;
+                }
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // --------------------------------------------------------------
+            // 4. STORAGE HELPERS (localStorage fallback)
+            // --------------------------------------------------------------
+            function storageGet(key, def) {
+                try {
+                    const val = localStorage.getItem('freeodd_' + key);
+                    return val ? JSON.parse(val) : def;
+                } catch { return def; }
+            }
+
+            function storageSet(key, val) {
+                localStorage.setItem('freeodd_' + key, JSON.stringify(val));
+            }
+
+            function getUsers() {
+                return storageGet('users', []);
+            }
+
+            function saveUsers(users) {
+                storageSet('users', users);
+            }
+
+            function findUser(email) {
+                return getUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
+            }
+
+            function getMikeka() {
+                return storageGet('mikeka', []);
+            }
+
+            function saveMikeka(data) {
+                storageSet('mikeka', data);
+            }
+
+            // --------------------------------------------------------------
+            // 5. AUTH (Firebase + localStorage fallback)
+            // --------------------------------------------------------------
+            async function authSignUp(email, password) {
+                if (useFirebase && auth) {
+                    try {
+                        const cred = await auth.createUserWithEmailAndPassword(email, password);
+                        if (db) {
+                            await db.collection('users').doc(cred.user.uid).set({
+                                email: email,
+                                shareCount: 0,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                        return { user: cred.user, uid: cred.user.uid };
+                    } catch (err) { throw err; }
+                } else {
+                    const users = getUsers();
+                    if (findUser(email)) throw new Error('Barua pepe tayari imesajiliwa.');
+                    const newUser = {
+                        email: email,
+                        password: password,
+                        shareCount: 0,
+                        uid: 'user_' + Date.now()
+                    };
+                    users.push(newUser);
+                    saveUsers(users);
+                    const userObj = { email: email, uid: newUser.uid };
+                    storageSet('currentUser', userObj);
+                    return { user: userObj, uid: newUser.uid };
+                }
+            }
+
+            async function authSignIn(email, password) {
+                if (useFirebase && auth) {
+                    try {
+                        const cred = await auth.signInWithEmailAndPassword(email, password);
+                        return { user: cred.user, uid: cred.user.uid };
+                    } catch (err) { throw err; }
+                } else {
+                    const users = getUsers();
+                    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password ===
+                    password);
+                    if (!found) throw new Error('Barua pepe au nenosiri si sahihi.');
+                    const userObj = { email: found.email, uid: found.uid };
+                    storageSet('currentUser', userObj);
+                    return { user: userObj, uid: found.uid };
+                }
+            }
+
+            async function authSignOut() {
+                if (useFirebase && auth) {
+                    // Remove presence
+                    if (currentUser) {
+                        try {
+                            await db.collection('presence').doc(currentUser.uid).delete();
+                        } catch {}
+                    }
+                    await auth.signOut();
+                }
+                localStorage.removeItem('freeodd_currentUser');
+                currentUser = null;
+                updateAuthUI(null);
+            }
+
+            function getCurrentUser() {
+                if (useFirebase && auth && auth.currentUser) {
+                    return { email: auth.currentUser.email, uid: auth.currentUser.uid };
+                }
+                const stored = storageGet('currentUser', null);
+                if (stored && stored.email) return stored;
+                return null;
+            }
+
+            // --------------------------------------------------------------
+            // 6. GOOGLE SIGN-IN
+            // --------------------------------------------------------------
+            async function signInWithGoogle() {
+                if (!useFirebase || !auth) {
+                    showToast('Google Sign-In inahitaji Firebase. Tafadhali tumia barua pepe.', 'warning');
+                    return;
+                }
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    const result = await auth.signInWithPopup(provider);
+                    const user = result.user;
+                    if (db) {
+                        const doc = await db.collection('users').doc(user.uid).get();
+                        if (!doc.exists) {
+                            await db.collection('users').doc(user.uid).set({
+                                email: user.email,
+                                shareCount: 0,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    }
+                    showToast('Karibu! Umeingia kwa Google.', 'success');
+                    updateAuthUI({ email: user.email, uid: user.uid });
+                } catch (err) {
+                    showToast('Hitilafu: ' + err.message, 'error');
+                }
+            }
+
+            googleLoginBtn.addEventListener('click', signInWithGoogle);
+            googleSignupBtn.addEventListener('click', signInWithGoogle);
+
+            // --------------------------------------------------------------
+            // 7. SHARE SYSTEM
+            // --------------------------------------------------------------
+            async function getShareCount(uid) {
+                if (useFirebase && db) {
+                    try {
+                        const doc = await db.collection('users').doc(uid).get();
+                        if (doc.exists) return doc.data().shareCount || 0;
+                        return 0;
+                    } catch { return 0; }
+                } else {
+                    const users = getUsers();
+                    const found = users.find(u => u.uid === uid);
+                    return found ? (found.shareCount || 0) : 0;
+                }
+            }
+
+            async function updateShareCount(uid, newCount) {
+                if (useFirebase && db) {
+                    try {
+                        await db.collection('users').doc(uid).update({ shareCount: newCount });
+                    } catch {
+                        try {
+                            await db.collection('users').doc(uid).set({
+                                shareCount: newCount,
+                                email: currentUser ? currentUser.email : '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } catch {}
+                    }
+                } else {
+                    const users = getUsers();
+                    const found = users.find(u => u.uid === uid);
+                    if (found) {
+                        found.shareCount = newCount;
+                        saveUsers(users);
+                    } else {
+                        users.push({ uid: uid, email: currentUser ? currentUser.email : '', shareCount: newCount,
+                            password: '' });
+                        saveUsers(users);
+                    }
+                }
+            }
+
+            async function checkShareStatus(uid) {
+                try {
+                    shareCount = await getShareCount(uid);
+                    updateShareUI();
+                    if (shareCount < SHARE_TARGET) {
+                        shareOverlay.classList.add('show');
+                    } else {
+                        shareOverlay.classList.remove('show');
+                    }
+                } catch (err) { console.warn('Share check error:', err); }
+            }
+
+            function updateShareUI() {
+                shareProgress.innerHTML = '';
+                for (let i = 0; i < SHARE_TARGET; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    if (i < shareCount) dot.classList.add('filled');
+                    if (i === shareCount && shareCount < SHARE_TARGET) dot.classList.add('active');
+                    dot.textContent = i < shareCount ? '✓' : (i + 1);
+                    shareProgress.appendChild(dot);
+                }
+                shareCountText.textContent = `Umewashirikisha: ${shareCount} / ${SHARE_TARGET}`;
+                if (shareCount >= SHARE_TARGET) {
+                    shareCountText.textContent = '✅ Umefanikiwa! Ufikiaji umefunguliwa.';
+                    shareStatus.textContent = 'Hongera! Sasa unaweza kuingia sehemu ya admin.';
+                    shareStatus.style.color = '#22c55e';
+                } else {
+                    shareStatus.textContent = `Shiriki na watu ${SHARE_TARGET - shareCount} waliobaki.`;
+                    shareStatus.style.color = '#fbbf24';
+                }
+            }
+
+            function getShareUrl() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('ref', currentUser ? currentUser.uid : '');
+                return url.toString();
+            }
+
+            async function recordShare() {
+                if (!currentUser) return;
+                const uid = currentUser.uid;
+                let current = await getShareCount(uid);
+                if (current >= SHARE_TARGET) {
+                    showToast('Tayari umeshiriki vya kutosha!', 'warning');
+                    return;
+                }
+                const newCount = current + 1;
+                await updateShareCount(uid, newCount);
+                shareCount = newCount;
+                updateShareUI();
+                showToast(`Umewashirikisha ${newCount} / ${SHARE_TARGET}`, 'success');
+                if (newCount >= SHARE_TARGET) {
+                    shareOverlay.classList.remove('show');
+                    showToast('Hongera! Ufikiaji umefunguliwa!', 'success');
+                }
+            }
+
+            shareTwitter.addEventListener('click', () => {
+                const url = getShareUrl();
+                const text = 'Natangaza Free Odd & Mikeka! Jiunge nami.';
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                    '_blank');
+                recordShare();
+            });
+
+            shareWhatsapp.addEventListener('click', () => {
+                const url = getShareUrl();
+                const text = 'Natangaza Free Odd & Mikeka! Jiunge nami.';
+                window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                recordShare();
+            });
+
+            shareCopy.addEventListener('click', () => {
+                const url = getShareUrl();
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Kiungo kimenakiliwa!', 'success');
+                    recordShare();
+                }).catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    showToast('Kiungo kimenakiliwa!', 'success');
+                    recordShare();
+                });
+            });
+
+            closeShare.addEventListener('click', () => {
+                if (shareCount >= SHARE_TARGET) {
+                    shareOverlay.classList.remove('show');
+                } else {
+                    showToast('Tafadhali shiriki na watu 5 ili kupata ufikiaji.', 'warning');
+                }
+            });
+
+            // --------------------------------------------------------------
+            // 8. IMAGE UPLOAD
+            // --------------------------------------------------------------
+            mikekaImage.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) { uploadFile = null;
+                    imagePreview.classList.remove('show'); return; }
+                uploadFile = file;
+                fileName.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    imagePreview.src = ev.target.result;
+                    imagePreview.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            async function uploadImage(file, path) {
+                if (!useFirebase || !storage) return null;
+                try {
+                    const ref = storage.ref().child(path);
+                    const snap = await ref.put(file);
+                    const url = await snap.ref.getDownloadURL();
+                    return url;
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    return null;
+                }
+            }
+
+            // --------------------------------------------------------------
+            // 9. MIKAKA CRUD
+            // --------------------------------------------------------------
+            async function loadPublicMikeka() {
+                try {
+                    let data = [];
+                    if (useFirebase && db) {
+                        const snapshot = await db.collection('mikeka')
+                            .orderBy('createdAt', 'desc')
+                            .get();
+                        snapshot.forEach(doc => {
+                            data.push({ id: doc.id, ...doc.data() });
+                        });
+                    } else {
+                        data = getMikeka().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                    }
+                    publicList.innerHTML = '';
+                    if (data.length === 0) {
+                        publicList.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Hakuna mikeka bado. Admin atasta kuziongeza.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'mikeka-card';
+                        const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString('sw') : 'sasa hivi';
+                        const imgHtml = item.imageUrl ?
+                            `<img src="${item.imageUrl}" class="card-image" alt="Mikeka" />` :
+                            '';
+                        card.innerHTML = `
+                            ${imgHtml}
+                            <div class="code">
+                                <span>${escapeHtml(item.code || '---')}</span>
+                                <button class="copy-btn" data-code="${escapeHtml(item.code || '')}">
+                                    <i class="fas fa-copy"></i> Nakili
+                                </button>
+                            </div>
+                            <div class="desc">${escapeHtml(item.description || 'Hakuna maelezo')}</div>
+                            <div class="meta">
+                                <span><i class="far fa-calendar-alt"></i> ${date}</span>
+                                <span><i class="far fa-user"></i> ${escapeHtml(item.createdBy || 'Admin')}</span>
+                            </div>
+                        `;
+                        publicList.appendChild(card);
+
+                        // Copy button
+                        card.querySelector('.copy-btn').addEventListener('click', (e) => {
+                            const code = e.currentTarget.dataset.code;
+                            navigator.clipboard.writeText(code).then(() => {
+                                showToast('Mikeka imenakiliwa!', 'success');
+                            }).catch(() => {
+                                const ta = document.createElement('textarea');
+                                ta.value = code;
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                ta.remove();
+                                showToast('Mikeka imenakiliwa!', 'success');
+                            });
+                        });
+                    });
+                } catch (err) {
+                    console.error('Load public mikeka error:', err);
+                    publicList.innerHTML = `<div class="empty-state"><p>❌ Hitilafu: ${err.message}</p></div>`;
+                }
+            }
+
+            async function loadAdminMikeka() {
+                if (!isAdminUnlocked || !currentUser) return;
+                try {
+                    let data = [];
+                    if (useFirebase && db) {
+                        const snapshot = await db.collection('mikeka')
+                            .orderBy('createdAt', 'desc')
+                            .get();
+                        snapshot.forEach(doc => {
+                            data.push({ id: doc.id, ...doc.data() });
+                        });
+                    } else {
+                        data = getMikeka().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                    }
+                    adminList.innerHTML = '';
+                    if (data.length === 0) {
+                        adminList.innerHTML = `<p style="color:#4a5a7a;">Hakuna mikeka. Anza kuongeza!</p>`;
+                        return;
+                    }
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        const imgHtml = item.imageUrl ?
+                            `<img src="${item.imageUrl}" class="preview-img" alt="img" />` :
+                            '';
+                        div.innerHTML = `
+                            <div class="info">
+                                <div class="code">${escapeHtml(item.code || '---')}</div>
+                                <div class="desc">${escapeHtml(item.description || 'Hakuna maelezo')}</div>
+                                ${imgHtml}
+                            </div>
+                            <div class="actions">
+                                <button class="edit" data-id="${item.id}"><i class="fas fa-edit"></i> Hariri</button>
+                                <button class="del" data-id="${item.id}"><i class="fas fa-trash"></i> Futa</button>
+                            </div>
+                        `;
+                        adminList.appendChild(div);
+
+                        div.querySelector('.edit').addEventListener('click', () => {
+                            editingDocId = item.id;
+                            editingImageUrl = item.imageUrl || null;
+                            mikekaCode.value = item.code || '';
+                            mikekaDesc.value = item.description || '';
+                            if (editingImageUrl) {
+                                imagePreview.src = editingImageUrl;
+                                imagePreview.classList.add('show');
+                                fileName.textContent = 'Picha ipo';
+                            } else {
+                                imagePreview.classList.remove('show');
+                                fileName.textContent = 'Chagua picha (hiari)';
+                            }
+                            mikekaForm.querySelector('button').innerHTML =
+                                '<i class="fas fa-save"></i> Sasisha';
+                            formFeedback.textContent = '🔧 Unahariri: ' + (item.code || '');
+                            formFeedback.style.color = '#fbbf24';
+                            mikekaCode.focus();
+                        });
+
+                        div.querySelector('.del').addEventListener('click', async () => {
+                            if (!confirm('Je, una uhakika unataka kufuta mikeka hii?')) return;
+                            try {
+                                if (useFirebase && db) {
+                                    await db.collection('mikeka').doc(item.id).delete();
+                                } else {
+                                    let list = getMikeka();
+                                    list = list.filter(m => m.id !== item.id);
+                                    saveMikeka(list);
+                                }
+                                showToast('Mikeka imefutwa!', 'success');
+                                loadAdminMikeka();
+                                loadPublicMikeka();
+                            } catch (err) {
+                                showToast('Hitilafu: ' + err.message, 'error');
+                            }
+                        });
+                    });
+                } catch (err) {
+                    console.error('Load admin mikeka error:', err);
+                    adminList.innerHTML = `<p style="color:#f87171;">❌ Hitilafu: ${err.message}</p>`;
+                }
+            }
+
+            // Add / Update mikeka
+            mikekaForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAdminUnlocked) {
+                    showToast('Tafadhali fungua admin kwanza.', 'warning');
+                    return;
+                }
+                if (!currentUser) {
+                    showToast('Tafadhali ingia kwanza.', 'warning');
+                    return;
+                }
+                const code = mikekaCode.value.trim();
+                if (!code) {
+                    formFeedback.textContent = '❌ Tafadhali weka msimbo.';
+                    formFeedback.style.color = '#f87171';
+                    return;
+                }
+                const desc = mikekaDesc.value.trim();
+
+                try {
+                    let imageUrl = editingImageUrl || null;
+
+                    // Upload new image if selected
+                    if (uploadFile) {
+                        const path = `mikeka/${Date.now()}_${uploadFile.name}`;
+                        const url = await uploadImage(uploadFile, path);
+                        if (url) imageUrl = url;
+                        uploadFile = null;
+                        mikekaImage.value = '';
+                        fileName.textContent = 'Chagua picha (hiari)';
+                        imagePreview.classList.remove('show');
+                    }
+
+                    const data = {
+                        code: code,
+                        description: desc || '',
+                        imageUrl: imageUrl,
+                        updatedAt: Date.now(),
+                        updatedBy: currentUser.email || 'Admin'
+                    };
+
+                    if (editingDocId) {
+                        // UPDATE
+                        if (useFirebase && db) {
+                            await db.collection('mikeka').doc(editingDocId).update(data);
+                        } else {
+                            let list = getMikeka();
+                            const idx = list.findIndex(m => m.id === editingDocId);
+                            if (idx !== -1) {
+                                list[idx] = { ...list[idx], ...data };
+                                saveMikeka(list);
+                            }
+                        }
+                        showToast('Mikeka imesasishwa!', 'success');
+                        formFeedback.textContent = '✅ Imesasishwa!';
+                        formFeedback.style.color = '#22c55e';
+                    } else {
+                        // ADD
+                        data.createdAt = Date.now();
+                        data.createdBy = currentUser.email || 'Admin';
+                        if (useFirebase && db) {
+                            const docRef = await db.collection('mikeka').add(data);
+                            data.id = docRef.id;
+                            // Send notification via toast
+                            showNotif('Mikeka Mpya!', `${data.code} imeongezwa na ${data.createdBy}`);
+                        } else {
+                            const list = getMikeka();
+                            data.id = 'mik_' + Date.now();
+                            list.push(data);
+                            saveMikeka(list);
+                            showNotif('Mikeka Mpya!', `${data.code} imeongezwa.`);
+                        }
+                        showToast('Mikeka imeongezwa!', 'success');
+                        formFeedback.textContent = '✅ Imehifadhiwa!';
+                        formFeedback.style.color = '#22c55e';
+                    }
+                    resetForm();
+                    loadAdminMikeka();
+                    loadPublicMikeka();
+                } catch (err) {
+                    formFeedback.textContent = '❌ ' + err.message;
+                    formFeedback.style.color = '#f87171';
+                }
+            });
+
+            function resetForm() {
+                mikekaCode.value = '';
+                mikekaDesc.value = '';
+                editingDocId = null;
+                editingImageUrl = null;
+                uploadFile = null;
+                mikekaImage.value = '';
+                fileName.textContent = 'Chagua picha (hiari)';
+                imagePreview.classList.remove('show');
+                mikekaForm.querySelector('button').innerHTML = '<i class="fas fa-save"></i> Hifadhi';
+                formFeedback.textContent = '';
+            }
+
+            // --------------------------------------------------------------
+            // 10. NOTIFICATIONS (real-time)
+            // --------------------------------------------------------------
+            function showNotif(title, body) {
+                toastTitle.textContent = title;
+                toastBody.textContent = body;
+                toast.className = 'toast success';
+                toast.classList.add('show');
+                clearTimeout(toast._timeout);
+                toast._timeout = setTimeout(() => toast.classList.remove('show'), 4500);
+            }
+
+            function showToast(msg, type = 'info') {
+                toastTitle.textContent = type === 'success' ? '✅ Imefanikiwa' :
+                    type === 'error' ? '❌ Hitilafu' :
+                    type === 'warning' ? '⚠️ Tahadhari' : 'ℹ️ Habari';
+                toastBody.textContent = msg;
+                toast.className = 'toast ' + type;
+                toast.classList.add('show');
+                clearTimeout(toast._timeout);
+                toast._timeout = setTimeout(() => toast.classList.remove('show'), 3500);
+            }
+
+            // Listen for new mikeka (real-time notifications)
+            function listenForNewMikeka() {
+                if (notifListener) return;
+                if (!useFirebase || !db) return;
+                notifListener = db.collection('mikeka')
+                    .orderBy('createdAt', 'desc')
+                    .limit(1)
+                    .onSnapshot((snapshot) => {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === 'added' && change.doc.data().createdBy !== (currentUser ? currentUser
+                                    .email : '')) {
+                                const data = change.doc.data();
+                                if (data.code && data.createdBy) {
+                                    showNotif('🆕 Mikeka Mpya!',
+                                        `${data.code} imeongezwa na ${data.createdBy}`);
+                                }
+                            }
+                        });
+                    }, (err) => console.warn('Notif listener error:', err));
+            }
+
+            // --------------------------------------------------------------
+            // 11. ONLINE USERS (presence)
+            // --------------------------------------------------------------
+            async function setupPresence() {
+                if (!useFirebase || !db || !currentUser) return;
+                try {
+                    const presenceRef = db.collection('presence').doc(currentUser.uid);
+                    await presenceRef.set({
+                        uid: currentUser.uid,
+                        email: currentUser.email,
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                        online: true
+                    });
+
+                    // Listen for online users count
+                    if (onlineListener) onlineListener();
+                    onlineListener = db.collection('presence')
+                        .where('online', '==', true)
+                        .onSnapshot((snap) => {
+                            onlineCount.textContent = snap.size;
+                        });
+
+                    // Set presence on disconnect
+                    const onDisconnect = presenceRef.onDisconnect();
+                    await onDisconnect.update({
+                        online: false,
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Update periodically
+                    setInterval(async () => {
+                        try {
+                            await presenceRef.update({
+                                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } catch {}
+                    }, 30000);
+                } catch (err) {
+                    console.warn('Presence setup error:', err);
+                }
+            }
+
+            // --------------------------------------------------------------
+            // 12. NAVIGATION & ROUTE GUARD
+            // --------------------------------------------------------------
+            function showPage(pageId) {
+                if ((pageId === 'home' || pageId === 'admin' || pageId === 'about') && !currentUser) {
+                    pageId = 'login';
+                    showToast('Tafadhali ingia au jisajili kwanza.', 'warning');
+                }
+
+                Object.values(pages).forEach(p => p.classList.remove('active'));
+                if (pages[pageId]) pages[pageId].classList.add('active');
+
+                navLinks.forEach(a => {
+                    a.classList.toggle('active', a.dataset.page === pageId);
+                });
+
+                if (pageId === 'login' || pageId === 'signup') {
+                    startRain();
+                } else {
+                    stopRain();
+                }
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (pageId === 'home' && currentUser) loadPublicMikeka();
+                if (pageId === 'admin' && isAdminUnlocked && currentUser) loadAdminMikeka();
+                if (pageId === 'about' && currentUser) {
+                    // nothing extra
+                }
+            }
+
+            navLinks.forEach(a => {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(a.dataset.page);
+                });
+            });
+
+            $('#switchToSignup').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('signup');
+            });
+            $('#switchToLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('login');
+            });
+
+            navLogout.addEventListener('click', () => {
+                authSignOut().then(() => {
+                    showToast('Umefanikiwa kutoka.', 'success');
+                    updateAuthUI(null);
+                    showPage('login');
+                }).catch(err => {
+                    showToast(err.message, 'error');
+                });
+            });
+
+            // --------------------------------------------------------------
+            // 13. AUTH UI STATE
+            // --------------------------------------------------------------
+            function updateAuthUI(user) {
+                currentUser = user;
+                if (user) {
+                    document.body.classList.add('logged-in');
+                    document.querySelectorAll('.nav-link-protected').forEach(el => el.style.display = 'inline-flex');
+                    document.querySelectorAll('.nav-link-auth').forEach(el => el.style.display = 'none');
+                    navLogout.style.display = 'inline-flex';
+                    checkShareStatus(user.uid);
+                    // Setup presence
+                    if (useFirebase && db) setupPresence();
+                    // Start notifications listener
+                    listenForNewMikeka();
+
+                    const active = document.querySelector('.page.active');
+                    if (active && (active.id === 'page-login' || active.id === 'page-signup')) {
+                        showPage('home');
+                    } else if (!active || active.id === 'page-login' || active.id === 'page-signup') {
+                        showPage('home');
+                    }
+                } else {
+                    document.body.classList.remove('logged-in');
+                    document.querySelectorAll('.nav-link-protected').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.nav-link-auth').forEach(el => el.style.display = 'inline-flex');
+                    navLogout.style.display = 'none';
+                    isAdminUnlocked = false;
+                    adminContent.classList.remove('show');
+                    adminPassBox.style.display = 'block';
+                    adminPassInput.value = '';
+                    adminPassError.textContent = '';
+                    shareOverlay.classList.remove('show');
+                    onlineCount.textContent = '0';
+                    if (notifListener) { notifListener();
+                        notifListener = null; }
+                    if (onlineListener) { onlineListener();
+                        onlineListener = null; }
+                    showPage('login');
+                }
+            }
+
+            // --------------------------------------------------------------
+            // 14. ADMIN UNLOCK
+            // --------------------------------------------------------------
+            adminUnlockBtn.addEventListener('click', () => {
+                const pass = adminPassInput.value.trim();
+                adminPassError.textContent = '';
+                if (pass === ADMIN_PASSWORD) {
+                    isAdminUnlocked = true;
+                    adminPassBox.style.display = 'none';
+                    adminContent.classList.add('show');
+                    showToast('Admin imefunguliwa!', 'success');
+                    loadAdminMikeka();
+                } else {
+                    adminPassError.textContent = '❌ Nenosiri si sahihi. Jaribu tena.';
+                    adminPassInput.value = '';
+                    adminPassInput.focus();
+                }
+            });
+
+            adminPassInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') adminUnlockBtn.click();
+            });
+
+            // --------------------------------------------------------------
+            // 15. HELPERS
+            // --------------------------------------------------------------
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // --------------------------------------------------------------
+            // 16. INIT
+            // --------------------------------------------------------------
+            // Check for share ref in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref && ref.length > 10) {
+                (async () => {
+                    let current = await getShareCount(ref);
+                    if (current < SHARE_TARGET) {
+                        await updateShareCount(ref, current + 1);
+                        showToast('Asante kwa kushiriki!', 'success');
+                    }
+                })();
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            const storedUser = getCurrentUser();
+            if (storedUser && storedUser.email) {
+                updateAuthUI(storedUser);
+            } else {
+                updateAuthUI(null);
+            }
+
+            console.log('✅ Free Odd & Mikeka System imeanzishwa!');
+            console.log('🔑 Nenosiri la Admin: dvary5050');
+            console.log('📤 Shiriki na watu 5 ili kupata ufikiaji kamili.');
+            console.log('🔒 Lazima uingie au ujisajili kwanza.');
+            if (!useFirebase) {
+                console.log('ℹ️ Hali ya localStorage (hakuna Firebase).');
+            }
+
+        })();
+    </script>
+
+</body>
+  </html>
