@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DVARY BOT - Google Sign In</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+    </script>
+
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #141b2b;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-card-hover: rgba(255, 255, 255, 0.07);
+            --text-primary: #f0f4ff;
+            --text-secondary: #a8b8d8;
+            --text-muted: #4a5a7a;
+            --border-color: rgba(255, 255, 255, 0.05);
+            --border-hover: rgba(79, 110, 247, 0.2);
+            --accent: #4f6ef7;
+            --accent-glow: rgba(79, 110, 247, 0.15);
+            --gold: #fbbf24;
+            --gold-glow: rgba(251, 191, 36, 0.12);
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            --radius: 24px;
+            --radius-sm: 14px;
+            --transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --green: #22c55e;
+            --red: #ef4444;
+        }
+
+        .light-mode {
+            --bg-primary: #f0f4ff;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.5);
+            --bg-card-hover: rgba(255, 255, 255, 0.7);
+            --text-primary: #1a1f36;
+            --text-secondary: #4a5a7a;
+            --text-muted: #8a9ab8;
+            --border-color: rgba(0, 0, 0, 0.06);
+            --border-hover: rgba(79, 110, 247, 0.15);
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s, border-color 0.4s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--accent), var(--gold));
+            border-radius: 10px;
+        }
+
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            width: 100%;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px 20px;
+            color: var(--text-primary);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success {
+            border-left: 4px solid var(--green);
+        }
+        .toast.error {
+            border-left: 4px solid var(--red);
+        }
+        .toast.warning {
+            border-left: 4px solid var(--gold);
+        }
+        .toast i {
+            font-size: 1.3rem;
+        }
+        .toast.success i {
+            color: var(--green);
+        }
+        .toast.error i {
+            color: var(--red);
+        }
+        .toast.warning i {
+            color: var(--gold);
+        }
+
+        /* ===== BOT CONTAINER ===== */
+        .bot-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        .login-screen {
+            background: var(--bg-secondary);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 48px 40px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: background 0.4s, border-color 0.4s;
+        }
+
+        .login-screen .bot-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 3.5rem;
+            color: #fff;
+            box-shadow: 0 8px 40px var(--accent-glow);
+        }
+
+        .login-screen h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .login-screen .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+        }
+
+        .login-screen .btn-google {
+            width: 100%;
+            padding: 16px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 40px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .login-screen .btn-google:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .login-screen .btn-google i {
+            color: #ea4335;
+            font-size: 1.4rem;
+        }
+
+        .login-screen .btn-google:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-screen .btn-google .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .login-screen .btn-google.loading .spinner {
+            display: inline-block;
+        }
+        .login-screen .btn-google.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .login-screen .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .login-screen .divider::before,
+        .login-screen .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .login-screen .error-msg {
+            color: var(--red);
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 22px;
+            margin-top: 12px;
+        }
+
+        /* ===== BOT CHAT INTERFACE (After Login) ===== */
+        .chat-interface {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            height: 600px;
+            flex-direction: column;
+            transition: background 0.4s, border-color 0.4s;
+        }
+
+        .chat-interface.active {
+            display: flex;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+        }
+
+        .chat-header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .chat-header .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .chat-header .user-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .chat-header .user-status {
+            font-size: 0.75rem;
+            color: var(--green);
+        }
+
+        .chat-header .logout-btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 30px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chat-header .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--bg-primary);
+        }
+
+        .chat-messages .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            animation: fadeUp 0.3s ease;
+        }
+
+        .chat-messages .message.bot {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-messages .message.user {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-messages .message .msg-time {
+            font-size: 0.65rem;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .chat-messages .message.user .msg-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-messages .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: var(--bg-card);
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-messages .typing-indicator.active {
+            display: block;
+        }
+
+        .chat-messages .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            margin: 0 3px;
+            animation: typing 1.4s infinite both;
+        }
+
+        .chat-messages .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .chat-messages .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Chat Input */
+        .chat-input {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            background: var(--bg-card);
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .chat-input input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .chat-input input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-input button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .chat-input button:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .chat-input button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-input button .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .chat-input button.loading .spinner {
+            display: inline-block;
+        }
+        .chat-input button.loading .btn-text {
+            display: none;
+        }
+
+        /* ===== QUICK COMMANDS ===== */
+        .quick-commands {
+            display: flex;
+            gap: 8px;
+            padding: 8px 24px 12px;
+            flex-wrap: wrap;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .quick-commands button {
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .quick-commands button:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-glow);
+        }
+
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            backdrop-filter: blur(8px);
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.04);
+            border-color: var(--border-hover);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .login-screen {
+                padding: 32px 24px;
+            }
+            .login-screen .bot-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2.8rem;
+            }
+            .login-screen h1 {
+                font-size: 1.5rem;
+            }
+            .chat-interface {
+                height: 90vh;
+                border-radius: var(--radius-sm);
+            }
+            .chat-header {
+                padding: 12px 16px;
+            }
+            .chat-messages {
+                padding: 14px 16px;
+            }
+            .chat-input {
+                padding: 12px 16px;
+            }
+            .chat-input input {
+                font-size: 0.9rem;
+                padding: 10px 14px;
+            }
+            .chat-input button {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+            .quick-commands {
+                padding: 6px 16px 10px;
+            }
+            .quick-commands button {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 6px 10px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .login-screen {
+                padding: 24px 16px;
+            }
+            .login-screen .bot-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+            .login-screen h1 {
+                font-size: 1.2rem;
+            }
+            .chat-header .user-name {
+                font-size: 0.85rem;
+            }
+            .chat-header .logout-btn {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+        }
+
+        /* Bot status indicator */
+        .bot-online {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse-dot 1.2s infinite;
+            margin-right: 6px;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        /* Google button icon */
+        .google-icon {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== THEME TOGGLE ===== -->
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <!-- ===== BOT CONTAINER ===== -->
+    <div class="bot-container">
+
+        <!-- ===== LOGIN SCREEN ===== -->
+        <div class="login-screen" id="loginScreen">
+            <div class="bot-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h1>DVARY BOT</h1>
+            <p class="subtitle">Ingia kwa Google ili kuanza mazungumzo na bot yetu</p>
+
+            <button class="btn-google" id="googleSignInBtn">
+                <span class="spinner"></span>
+                <span class="btn-text">
+                    <i class="fab fa-google"></i> Ingia kwa Google
+                </span>
+            </button>
+
+            <div class="divider">
+                <span>🔒 Salama na Firebase</span>
+            </div>
+
+            <div class="error-msg" id="loginError"></div>
+        </div>
+
+        <!-- ===== CHAT INTERFACE ===== -->
+        <div class="chat-interface" id="chatInterface">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="user-name" id="userName">Mtumiaji</div>
+                        <div class="user-status">
+                            <span class="bot-online"></span> <span id="userStatus">Online</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Toka
+                </button>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    👋 Habari! Mimi ni DVARY Bot. Ni furaha kukutana nawe!
+                    <div class="msg-time">Sasa hivi</div>
+                </div>
+                <div class="message bot">
+                    💬 Unaweza kuniuliza maswali yoyote au kutumia vifungo vilivyo chini.
+                    <div class="msg-time">Sasa hivi</div>
+                </div>
+            </div>
+
+            <!-- Quick Commands -->
+            <div class="quick-commands" id="quickCommands">
+                <button data-command="help">❓ Msaada</button>
+                <button data-command="about">ℹ️ Kuhusu</button>
+                <button data-command="mikeka">📋 Mikeka</button>
+                <button data-command="time">🕐 Saa</button>
+                <button data-command="weather">🌤️ Hali ya Hewa</button>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Andika ujumbe wako hapa..." />
+                <button id="sendBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text"><i class="fas fa-paper-plane"></i> Tuma</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== JAVASCRIPT - FIREBASE AUTH + BOT LOGIC ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ==============================================================
+            // FIREBASE CONFIG - BADILI NA YAKO
+            // ==============================================================
+            const firebaseConfig = {
+                apiKey: "AIzaSyDpFyANpjv2dMUvXoMSSmqoT3s1UwJLUkg",
+                authDomain: "dvary-9a7d0.firebaseapp.com",
+                projectId: "dvary-9a7d0",
+                storageBucket: "dvary-9a7d0.firebasestorage.app",
+                messagingSenderId: "107370806066",
+                appId: "1:107370806066:android:e954fb03d99e52ac09f52b"
+            };
+
+            let useFirebase = false;
+            let auth = null;
+            let db = null;
+
+            try {
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                useFirebase = true;
+                console.log('✅ Firebase imeunganishwa.');
+            } catch (err) {
+                console.warn('⚠️ Firebase hitilafu:', err.message);
+                useFirebase = false;
+            }
+
+            // ==============================================================
+            // DOM REFS
+            // ==============================================================
+            const $ = (s) => document.querySelector(s);
+            const $$ = (s) => document.querySelectorAll(s);
+
+            const loginScreen = $('#loginScreen');
+            const chatInterface = $('#chatInterface');
+            const googleSignInBtn = $('#googleSignInBtn');
+            const loginError = $('#loginError');
+            const logoutBtn = $('#logoutBtn');
+            const chatMessages = $('#chatMessages');
+            const chatInput = $('#chatInput');
+            const sendBtn = $('#sendBtn');
+            const quickCommands = $('#quickCommands');
+            const userAvatar = $('#userAvatar');
+            const userName = $('#userName');
+            const userStatus = $('#userStatus');
+            const themeToggle = $('#themeToggle');
+            const themeIcon = $('#themeIcon');
+            const toastContainer = $('#toastContainer');
+
+            let currentUser = null;
+            let isProcessing = false;
+
+            // ==============================================================
+            // TOAST
+            // ==============================================================
+            function showToast(message, type = 'info') {
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.classList.add('show'), 50);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 400);
+                }, 4000);
+            }
+
+            // ==============================================================
+            // THEME
+            // ==============================================================
+            let darkMode = true;
+
+            function setTheme(mode) {
+                darkMode = mode;
+                document.body.classList.toggle('light-mode', !mode);
+                themeIcon.className = mode ? 'fas fa-moon' : 'fas fa-sun';
+                localStorage.setItem('theme', mode ? 'dark' : 'light');
+            }
+
+            themeToggle.addEventListener('click', () => setTheme(!darkMode));
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') setTheme(false);
+            else setTheme(true);
+
+            // ==============================================================
+            // BOT LOGIC
+            // ==============================================================
+            function getTime() {
+                const now = new Date();
+                return now.toLocaleTimeString('sw', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function getDate() {
+                const now = new Date();
+                return now.toLocaleDateString('sw', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
+
+            function getWeather() {
+                const conditions = ['☀️ Jua kali', '⛅ Mawingu kidogo', '🌧️ Mvua', '🌤️ Jua na mawingu', '🌦️ Mvua kidogo'];
+                return conditions[Math.floor(Math.random() * conditions.length)];
+            }
+
+            function getBotResponse(message) {
+                const msg = message.toLowerCase().trim();
+
+                // Commands
+                if (msg === 'help' || msg === 'msaada' || msg === '?') {
+                    return `📋 <b>Amri Zinazopatikana:</b><br>
+                    • help / msaada - Onyesha msaada<br>
+                    • about / kuhusu - Maelezo kuhusu bot<br>
+                    • mikeka / codes - Onyesha mikeka<br>
+                    • time / saa - Onyesha muda<br>
+                    • weather / hali - Hali ya hewa<br>
+                    • hi / hello / jambo - Salamu<br>
+                    • name / jina - Jina lako<br>
+                    • thanks / asante - Shukrani`;
+                }
+
+                if (msg === 'about' || msg === 'kuhusu') {
+                    return `🤖 <b>DVARY BOT</b><br>
+                    Hii ni bot ya kisasa iliyotengenezwa kwa ajili ya kukusaidia.<br>
+                    <br>
+                    🔹 Imetengenezwa kwa HTML, CSS, JavaScript<br>
+                    🔹 Inatumia Firebase Authentication<br>
+                    🔹 Inaweza kuzungumza na wewe<br>
+                    🔹 Inajibu maswali yako kwa haraka<br>
+                    <br>
+                    <i>DVARY SYSTEM PRO MAX</i>`;
+                }
+
+                if (msg === 'mikeka' || msg === 'codes') {
+                    return `📋 <b>Mikeka Zetu:</b><br>
+                    🔹 ODD-001 - Mikeka ya kwanza<br>
+                    🔹 ODD-002 - Mikeka ya pili<br>
+                    🔹 ODD-003 - Mikeka ya tatu<br>
+                    🔹 ODD-004 - Mikeka ya nne<br>
+                    🔹 ODD-005 - Mikeka ya tano<br>
+                    <br>
+                    <i>Pata mikeka za kipekee bure kabisa!</i>`;
+                }
+
+                if (msg === 'time' || msg === 'saa') {
+                    return `🕐 <b>Muda wa sasa:</b><br>
+                    📅 ${getDate()}<br>
+                    ⏰ ${getTime()}`;
+                }
+
+                if (msg === 'weather' || msg === 'hali') {
+                    return `🌤️ <b>Hali ya Hewa:</b><br>
+                    ${getWeather()}<br>
+                    🌡️ Joto: ${Math.floor(Math.random() * 15 + 20)}°C<br>
+                    💧 Unyevu: ${Math.floor(Math.random() * 40 + 40)}%`;
+                }
+
+                // Greetings
+                if (msg.includes('hi') || msg.includes('hello') || msg.includes('jambo') || msg.includes('habari')) {
+                    const greetings = [
+                        '👋 Habari! Ninafurahi kukuona!',
+                        '😊 Jambo! Vipi leo?',
+                        '🤗 Hello! Karibu sana!',
+                        '👋 Hi! Niko hapa kukusaidia!'
+                    ];
+                    return greetings[Math.floor(Math.random() * greetings.length)];
+                }
+
+                if (msg.includes('name') || msg.includes('jina')) {
+                    if (currentUser) {
+                        return `👤 <b>Jina lako:</b> ${currentUser.displayName || currentUser.email || 'Mtumiaji'}`;
+                    }
+                    return '👤 Jina lako halijapatikana.';
+                }
+
+                if (msg.includes('thanks') || msg.includes('asante') || msg.includes('thank')) {
+                    return '😊 Karibu sana! Nipo hapa kukusaidia wakati wowote.';
+                }
+
+                // Default response
+                const responses = [
+                    '🤔 Samahani, sijaelewa. Jaribu kuuliza tofauti.',
+                    '😅 Sijui jibu la swali lako. Jaribu "help" kuona amri zote.',
+                    '💡 Unaweza kuandika "help" ili kuona ninachoweza kufanya.',
+                    '🤖 Niko hapa kukusaidia! Andika "help" kwa msaada.'
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+
+            // ==============================================================
+            // CHAT FUNCTIONS
+            // ==============================================================
+            function addMessage(text, type = 'bot', isHTML = false) {
+                const div = document.createElement('div');
+                div.className = `message ${type}`;
+
+                if (isHTML) {
+                    div.innerHTML = text;
+                } else {
+                    div.textContent = text;
+                }
+
+                const time = document.createElement('div');
+                time.className = 'msg-time';
+                time.textContent = getTime();
+                div.appendChild(time);
+
+                chatMessages.appendChild(div);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function showTyping() {
+                const typing = document.createElement('div');
+                typing.className = 'typing-indicator active';
+                typing.id = 'typingIndicator';
+                typing.innerHTML = `
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                `;
+                chatMessages.appendChild(typing);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function hideTyping() {
+                const typing = document.getElementById('typingIndicator');
+                if (typing) typing.remove();
+            }
+
+            function handleUserMessage(message) {
+                if (!message || message.trim() === '') return;
+                if (isProcessing) return;
+
+                // Add user message
+                addMessage(message, 'user');
+                chatInput.value = '';
+                isProcessing = true;
+                sendBtn.disabled = true;
+                sendBtn.classList.add('loading');
+
+                // Show typing indicator
+                showTyping();
+
+                // Get bot response with delay
+                setTimeout(() => {
+                    hideTyping();
+                    const response = getBotResponse(message);
+                    addMessage(response, 'bot', true);
+                    isProcessing = false;
+                    sendBtn.disabled = false;
+                    sendBtn.classList.remove('loading');
+                }, 800 + Math.random() * 600);
+            }
+
+            // ==============================================================
+            // EVENT LISTENERS
+            // ==============================================================
+            // Send button
+            sendBtn.addEventListener('click', () => {
+                const message = chatInput.value;
+                handleUserMessage(message);
+            });
+
+            // Enter key
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const message = chatInput.value;
+                    handleUserMessage(message);
+                }
+            });
+
+            // Quick commands
+            quickCommands.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const command = e.target.dataset.command;
+                    handleUserMessage(command);
+                }
+            });
+
+            // ==============================================================
+            // AUTH - GOOGLE SIGN IN
+            // ==============================================================
+            async function handleGoogleSignIn() {
+                if (!useFirebase || !auth) {
+                    showToast('Google Sign-In inahitaji Firebase. Angalia config yako.', 'error');
+                    return;
+                }
+
+                googleSignInBtn.classList.add('loading');
+                googleSignInBtn.disabled = true;
+                loginError.textContent = '';
+
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    const result = await auth.signInWithPopup(provider);
+                    const user = result.user;
+
+                    // Save user to Firestore
+                    if (db) {
+                        const doc = await db.collection('users').doc(user.uid).get();
+                        if (!doc.exists) {
+                            await db.collection('users').doc(user.uid).set({
+                                fullName: user.displayName || '',
+                                email: user.email,
+                                photoURL: user.photoURL || '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else {
+                            await db.collection('users').doc(user.uid).update({
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    }
+
+                    showToast('✅ Umefanikiwa kuingia! Karibu ' + (user.displayName || user.email) + '!', 'success');
+
+                } catch (err) {
+                    if (err.code === 'auth/popup-blocked') {
+                        loginError.textContent = '⚠️ Ruhusu popups kwenye browser yako.';
+                        showToast('Ruhusu popups kwenye browser yako.', 'warning');
+                    } else if (err.code === 'auth/popup-closed-by-user') {
+                        loginError.textContent = 'Umeghairi kuingia.';
+                    } else {
+                        loginError.textContent = 'Kosa: ' + err.message;
+                        showToast(err.message, 'error');
+                    }
+                } finally {
+                    googleSignInBtn.classList.remove('loading');
+                    googleSignInBtn.disabled = false;
+                }
+            }
+
+            googleSignInBtn.addEventListener('click', handleGoogleSignIn);
+
+            // ==============================================================
+            // LOGOUT
+            // ==============================================================
+            function handleLogout() {
+                if (useFirebase && auth) {
+                    auth.signOut();
+                }
+                chatInterface.classList.remove('active');
+                loginScreen.style.display = 'block';
+                currentUser = null;
+                showToast('Umefanikiwa kutoka.', 'info');
+            }
+
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Je, una uhakika unataka kutoka?')) {
+                    handleLogout();
+                }
+            });
+
+            // ==============================================================
+            // AUTH STATE LISTENER
+            // ==============================================================
+            if (useFirebase && auth) {
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName || user.email || 'Mtumiaji',
+                            photoURL: user.photoURL
+                        };
+
+                        loginScreen.style.display = 'none';
+                        chatInterface.classList.add('active');
+
+                        // Update user info
+                        userName.textContent = currentUser.displayName;
+                        if (currentUser.photoURL) {
+                            userAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="Avatar" />`;
+                        } else {
+                            const initial = (currentUser.displayName || 'U')[0].toUpperCase();
+                            userAvatar.innerHTML = `<span style="font-size:1.2rem;font-weight:700;">${initial}</span>`;
+                        }
+
+                        userStatus.textContent = 'Online';
+
+                        // Add welcome back message
+                        if (chatMessages.children.length <= 2) {
+                            addMessage(`👋 Karibu tena ${currentUser.displayName}! Niko hapa kukusaidia.`, 'bot');
+                        }
+
+                        showToast('Karibu ' + currentUser.displayName + '!', 'success');
+
+                    } else {
+                        chatInterface.classList.remove('active');
+                        loginScreen.style.display = 'block';
+                        currentUser = null;
+                    }
+                });
+            }
+
+            // ==============================================================
+            // INIT - Check if user already logged in (localStorage fallback)
+            // ==============================================================
+            // If Firebase is not available, show message
+            if (!useFirebase) {
+                loginError.textContent = '⚠️ Firebase haijasanidiwa. Angalia config yako.';
+                showToast('Firebase haijasanidiwa. Tafadhali angalia config.', 'error');
+                googleSignInBtn.disabled = true;
+                googleSignInBtn.style.opacity = '0.5';
+                googleSignInBtn.querySelector('.btn-text').innerHTML = '⚠️ Firebase Config Inahitajika';
+            }
+
+            console.log('✅ DVARY BOT imeanzishwa!');
+            console.log('🔐 Inatumia Google Sign-In na Firebase.');
+            console.log('💬 Bot inaweza kuzungumza na watumiaji.');
+
+        })();
+    </script>
+
+</body>
+</html>
