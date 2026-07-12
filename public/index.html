@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <input type="tel" id="phone" placeholder="07XXXXXXXX">
+  <input type="number" id="amount" placeholder="Kiasi">
+  <button onclick="lipa()">Lipa Sasa</button>
+
+  <script>
+    async function lipa() {
+      const res = await fetch('/api/lipa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: document.getElementById('phone').value,
+          amount: document.getElementById('amount').value
+        })
+      });
+      const data = await res.json();
+      alert(JSON.stringify(data));
+    }
+  </script>
+</body>
+</html>
+
