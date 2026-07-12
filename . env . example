@@ -1,0 +1,21 @@
+# ==============================================================
+# HARAKA PAY ENVIRONMENT VARIABLES
+# ==============================================================
+
+# API Key yako kutoka Haraka Pay Dashboard
+HARAKAPAY_API_KEY=hpk_your_actual_api_key_here
+
+# Base URL ya Haraka Pay API
+HARAKAPAY_BASE_URL=https://harakapay.net
+
+# Merchant ID yako
+HARAKAPAY_MERCHANT_ID=your_merchant_id_here
+
+# Jina la App yako
+APP_NAME=Free Odd & Mikeka
+
+# URL ya App yako (badilisha na domain yako halisi)
+APP_URL=https://freeodd-mikeka.vercel.app
+
+# URL ya Webhook (kwa kupokea majibu ya malipo)
+WEBHOOK_URL=https://freeodd-mikeka.vercel.app/webhook/haraka-pay
